@@ -91,7 +91,6 @@
           <b-button variant="secondary">Reset</b-button>
           <b-button variant="primary" @click="submit">Submit</b-button>
         </div>
-        {{ rend }}
       </b-card>
     </b-container>
   </div>
@@ -103,14 +102,8 @@ export default {
   name: 'IndexPage',
   data() {
     return {
-      rendering: process.server ? 'server' : 'client',
       test: '',
       prompt: ''
-    }
-  },
-  computed: {
-    rend() {
-      return this.rendering
     }
   },
   methods: {
@@ -131,12 +124,12 @@ export default {
         console.log('errrr')
         console.log(err)
       })
-      console.log(vals)
-      
     }
   }
 }
+
 </script>
+
 <style>
 body {
   background-color: #45555F;
@@ -150,6 +143,4 @@ body {
   width: 95vw;
   height: calc(100vh - 15vh);
 }
-
-
 </style>
