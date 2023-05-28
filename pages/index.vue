@@ -121,7 +121,7 @@ export default {
     async requestToAPI() {
 
       console.log(this.prompt)
-      const vals = await this.$axios.$post('/insert', {
+      const vals = await this.$axios.$post('/request', {
         val: this.prompt,
       }).then(res => {
         console.log('res')
