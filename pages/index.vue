@@ -7,7 +7,7 @@
         Mind Mapping In VR
       </b-navbar-brand>
     </b-navbar>
-    <b-container class="app-container" fluid>    
+    <b-container class="app-container col d-flex justify-content-center" fluid>    
       <!-- Content here -->
       <b-card class="main-card">
         <b-row class="main-row">
@@ -21,6 +21,17 @@
 
           </b-col>
           <b-col v-if="!requested" class="main-form">
+            <b-form-group>
+              <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555F">Please insert the desired file name:</h5>
+              <b-form-input
+                id="input-1"
+                v-model="fileName"
+                type="text"
+                :state="(fileName.length > 0)"
+                placeholder="Enter file name"
+                required
+              ></b-form-input>
+            </b-form-group>
             <b-form-group class="mt-2">
               <h5 class="ml-1" style="font-weight: bold; color: #45555F">Please insert your textual information below:</h5>
               <b-row class="mt-2">
@@ -28,7 +39,6 @@
                   <b-form-textarea
                     id="textarea-large"
                     v-model="prompt"
-                    :state="!(prompt.length > 15000)"
                     size="lg"
                     rows="10"
                     placeholder="Input text here..."
@@ -38,10 +48,6 @@
               </b-row>
             </b-form-group>
             <b-form-group>
-              <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555F">Or, if you prefer, insert a text file:</h5>
-              <b-form-file accept=".txt"></b-form-file>
-            </b-form-group>
-            <b-form-group>
               <div class="text-right mt-3">
               <b-spinner v-if="loading" variant="primary" label="Spinning"></b-spinner>
               <b-button variant="primary" @click="submit">Submit</b-button>
@@ -49,9 +55,18 @@
             </b-form-group>
           </b-col>
           <b-col v-else class="main-form">
-            <h3>Here you can see the result:</h3>
+            <h3>Here you can see a preview of the result:</h3>
+            <p> This table has been transformed into a csv format and sent to Google Drive with the name <span class="font-weight-bold">{{ fileName }}.csv</span>.<br>Go check the Mind Map in Noda.io app for a visual representation.</p>
             <div>
-              <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="items"></b-table>
+              <b-table 
+                striped 
+                hover 
+                :per-page="perPage" 
+                :current-page="currentPage" 
+                :items="items"
+                small
+                >
+              </b-table>
               <b-pagination
                 v-model="currentPage"
                 :total-rows="totalRows"
@@ -85,9 +100,10 @@ export default {
       requested: false,
       res: '',
       items: [],
+      fileName: '',
       totalRows: 1,
       currentPage: 1,
-      perPage: 7
+      perPage: 9
     }
   },
   methods: {
@@ -99,6 +115,7 @@ export default {
     reset() {
       this.loading = false
       this.requested = false
+      this.items = []
     },
     async requestToAPI() {
 
@@ -109,21 +126,9 @@ export default {
         this.loading = false
         console.log('res')
         console.log(res)
-        let results = res["result"]
-        console.log(results.split(/[\n,]/))
-        let vals = results.split(/[\n,]/)
-        for (let i = 0; i < vals.length; i++) {
-          if (i > 0) {
-            let obj = {
-              NodeId: vals[i],
-              FromNode: vals[i + 1],
-              Colour: vals[i + 2],
-              NodeDescription: vals[i + 3]
-            }
-            this.items.push(obj)
-            i = i + 3
-          }
-        }
+        const results = res.result
+        console.log(results)
+        this.items = results
         this.requested = true
         this.totalRows = this.items.length
         this.res = res
@@ -155,17 +160,19 @@ body {
 .main-form {
   height: 55vh;
   padding: 2%;
+  color: rgb(69, 85, 95);
 }
 
 .main-card {
   margin-top: 15vh;
   margin-bottom: 15vh;
   padding: 0%;
+  width: 90vw;
 }
 
 .main-description {
   padding: 2%;
-  height: 50vh;
+  height: 55vh;
   color: rgb(69, 85, 95);
   font-size: 20px;
   font-weight: bolder;
