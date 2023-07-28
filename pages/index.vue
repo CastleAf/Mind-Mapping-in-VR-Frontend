@@ -116,6 +116,7 @@
                 class="my-0"></b-pagination>
               <b-form-group>
                 <div class="text-right mt-3">
+                  <b-button class="mr-2" variant="success" @click="doGDriveRequest">Send to GDrive</b-button>
                   <b-button variant="primary" @click="reset">New Request</b-button>
                 </div>
               </b-form-group>
@@ -214,7 +215,7 @@ export default {
       this.gptHistory.push({ role: 'user', content: message })
 
       // Request to OpenAI
-      const url = '/requestV2/' + 'mom'
+      const url = '/requestV2/' + 'test'
       await this.$axios
         .$post(url, this.gptHistory)
         .then((res) => {
@@ -279,11 +280,30 @@ export default {
         console.log('2')
         console.log(gptAnswer)
 
-        this.mindMap = JSON.parse(gptAnswer)
+        // replace None with "None"
+        gptAnswer = gptAnswer.replace(/None/g, '"None"')
 
-        this.$set(this.mindMap, JSON.parse(gptAnswer))
+        this.mindMap = JSON.parse(gptAnswer)
+        this.totalRows = this.mindMap.length
+
+        // FIXME: B-TABLE DOES NOT UPDATE WHEN MINDMAP IS UPDATED
+        // this.$set(this.mindMap, JSON.parse(gptAnswer))
         this.requested = true
       }
+    },
+    async doGDriveRequest() {
+      this.loading = true
+
+      const url = '/requestGDrive/' + 'test'
+      await this.$axios
+        .$post(url, this.mindMap)
+        .then((res) => {
+          console.log(res)
+        })
+        .catch((err) => {
+          this.loading = false
+          console.log(err)
+        })
     },
   },
 }
