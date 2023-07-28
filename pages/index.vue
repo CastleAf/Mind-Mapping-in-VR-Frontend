@@ -9,7 +9,7 @@
     <b-container class="app-container col d-flex justify-content-center" fluid>
       <!-- Content here -->
       <b-card class="main-card">
-        <b-row class="main-row">
+        <b-row v-if="!chat" class="main-row">
           <b-col class="main-description ml-3" fluid>
             <h2>Mind Mapping in VR</h2>
 
@@ -44,14 +44,8 @@
               <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555f">
                 Please insert the desired file name:
               </h5>
-              <b-form-input
-                id="input-1"
-                v-model="tempFileName"
-                type="text"
-                :state="fileName.length > 0"
-                placeholder="Enter file name"
-                required
-              ></b-form-input>
+              <b-form-input id="input-1" v-model="tempFileName" type="text" :state="fileName.length > 0"
+                placeholder="Enter file name" required></b-form-input>
             </b-form-group>
             <b-form-group class="mt-2">
               <h5 class="ml-1" style="font-weight: bold; color: #45555f">
@@ -59,13 +53,8 @@
               </h5>
               <b-row class="mt-2">
                 <b-col>
-                  <b-form-textarea
-                    id="textarea-large"
-                    v-model="prompt"
-                    size="lg"
-                    rows="11"
-                    placeholder="Input text here..."
-                  ></b-form-textarea>
+                  <b-form-textarea id="textarea-large" v-model="prompt" size="lg" rows="11"
+                    placeholder="Input text here..."></b-form-textarea>
                   <p v-if="prompt.length > 15000" style="color: #dc3545">
                     Prompt too long, please keep it lower than 2000 words.
                     {{ prompt.length }}
@@ -75,18 +64,10 @@
             </b-form-group>
             <b-form-group>
               <div class="submit mt-3">
-                <b-spinner
-                  v-if="loading"
-                  class="mr-2"
-                  variant="primary"
-                  label="Spinning"
-                ></b-spinner>
-                <b-button
-                  :disabled="loading || tempFileName.length == 0"
-                  variant="primary"
-                  @click="submit"
-                  >Submit</b-button
-                >
+                <b-spinner v-if="loading" class="mr-2" variant="primary" label="Spinning"></b-spinner>
+                <b-button :disabled="loading || tempFileName.length == 0" class="mr-2" variant="primary"
+                  @click="submit">Submit</b-button>
+                <b-button variant="info" @click="activateChat">Chat</b-button>
               </div>
             </b-form-group>
           </b-col>
@@ -99,28 +80,43 @@
               check the Mind Map in Noda.io app for a visual representation.
             </p>
             <div>
-              <b-table
-                striped
-                hover
-                :per-page="perPage"
-                :current-page="currentPage"
-                :items="items"
-                small
-              >
+              <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="items" small>
               </b-table>
-              <b-pagination
-                v-model="currentPage"
-                :total-rows="totalRows"
-                :per-page="perPage"
-                align="fill"
-                size="sm"
-                class="my-0"
-              ></b-pagination>
+              <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm"
+                class="my-0"></b-pagination>
               <b-form-group>
                 <div class="text-right mt-3">
-                  <b-button variant="primary" @click="reset"
-                    >New Request</b-button
-                  >
+                  <b-button variant="primary" @click="reset">New Request</b-button>
+                </div>
+              </b-form-group>
+            </div>
+          </b-col>
+        </b-row>
+        <b-row class="main-row" v-else>
+          <b-col class="app">
+            <div class="messages">
+              <Message v-for="message in messages" :key="message.id" :class="['message', { right: message.isMine }]"
+                :dark="message.isMine" :text="message.text" :author="message.author" />
+            </div>
+            <br>
+            <ChatBox class="chat-box" @submit="onSubmit" @reset="handleReset" />
+          </b-col>
+          <b-col v-if="requested" class="main-form">
+            <h3>Here you can see a preview of the result:</h3>
+            <p>
+              This table has been transformed into a csv format and sent to
+              Google Drive with the name
+              <span class="font-weight-bold">{{ fileName }}.csv</span>.<br />Go
+              check the Mind Map in Noda.io app for a visual representation.
+            </p>
+            <div>
+              <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="mindMapData" small>
+              </b-table>
+              <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm"
+                class="my-0"></b-pagination>
+              <b-form-group>
+                <div class="text-right mt-3">
+                  <b-button variant="primary" @click="reset">New Request</b-button>
                 </div>
               </b-form-group>
             </div>
@@ -132,8 +128,15 @@
 </template>
 
 <script>
+import ChatBox from '@/components/ChatBox.vue'
+import Message from '@/components/Message.vue'
+
 export default {
-  name: 'IndexPage',
+  name: 'MainPage',
+  components: {
+    ChatBox,
+    Message,
+  },
   data() {
     return {
       prompt: '',
@@ -146,7 +149,23 @@ export default {
       totalRows: 1,
       currentPage: 1,
       perPage: 9,
+      chat: false,
+      data: [],
+      id: 2,
+      messages: [],
+      gptHistory: [
+        {
+          role: "system",
+          content: "You are helping the User to build a Mind Map. The user will prompt for you to create a Mind Map based on a text input. When you have the information needed to build the mind map, please answer in the mind map format, such as: [{'NodeId': 'value', 'NomeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}, {'NodeId': 'value', 'NomeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}].",
+        }
+      ],
+      mindMap: []
     }
+  },
+  computed: {
+    mindMapData() {
+      return this.mindMap.length > 0 ? this.mindMap : []
+    },
   },
   methods: {
     async submit() {
@@ -186,6 +205,85 @@ export default {
           console.log('errrr')
           console.log(err)
         })
+    },
+    activateChat() {
+      this.chat = true
+    },
+    async requestToGpt(message) {
+
+      this.gptHistory.push({ role: 'user', content: message })
+
+      // Request to OpenAI
+      const url = '/requestV2/' + 'mom'
+      await this.$axios
+        .$post(url, this.gptHistory)
+        .then((res) => {
+          console.log(res)
+
+          const gptAnswer = res.answer.text
+
+          this.checkMindMap(gptAnswer)
+
+          this.gptHistory.push({ role: 'assistant', content: gptAnswer })
+          this.sendMessage({
+            text: gptAnswer,
+            role: res.answer.role,
+          })
+
+        })
+        .catch((err) => {
+          this.loading = false
+          console.log('errrr')
+          console.log(err)
+        })
+    },
+    // This method will be called when a new message is sent
+    onSubmit(event, textv) {
+      event.preventDefault()
+
+      this.sendMessage({
+        text: textv,
+        role: 'user',
+      })
+
+      this.requestToGpt(textv)
+    },
+    sendMessage(message) {
+      const mine = message.role === 'user'
+      const auth = message.role
+      this.messages.push({ id: this.id, isMine: mine, text: message.text, author: auth },)
+      this.id++
+    },
+    handleReset() {
+      this.chat = false
+    },
+    checkMindMap(gptAnswer) {
+      if (gptAnswer.includes('NodeId')) {
+
+        // search for first '[' in gptAnswer
+        const index = gptAnswer.indexOf('[')
+
+        // remove everything before '['
+        gptAnswer = gptAnswer.substring(index)
+
+        // search for first ']' in gptAnswer
+        const index2 = gptAnswer.indexOf(']')
+
+        // remove everything after ']'
+        gptAnswer = gptAnswer.substring(0, index2 + 1)
+        console.log('1')
+        console.log(gptAnswer)
+
+        // remove all single quotes
+        gptAnswer = gptAnswer.replace(/'/g, '"')
+        console.log('2')
+        console.log(gptAnswer)
+
+        this.mindMap = JSON.parse(gptAnswer)
+
+        this.$set(this.mindMap, JSON.parse(gptAnswer))
+        this.requested = true
+      }
     },
   },
 }
@@ -229,5 +327,29 @@ body {
 .submit {
   display: flex;
   justify-content: flex-end;
+}
+</style>
+<style scoped>
+.app {
+  height: 60vh;
+  width: 90vw;
+  padding: 2%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages {
+  flex-grow: 1;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.message+.message {
+  margin-top: 1rem;
+}
+
+.message.right {
+  margin-left: auto;
 }
 </style>
