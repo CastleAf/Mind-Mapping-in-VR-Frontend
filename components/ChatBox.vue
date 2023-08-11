@@ -30,10 +30,16 @@ export default {
 </script>
 <style scoped>
 .chat-box {
-  width: 90%;
+  width: 95%;
   margin-left: auto;
   margin-right: auto;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  line-height: 1.5rem;
 }
 
 input {

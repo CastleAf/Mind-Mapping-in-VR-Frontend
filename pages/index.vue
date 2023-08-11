@@ -39,7 +39,7 @@
               creativity.
             </p>
           </b-col>
-          <b-col v-if="!requested" class="main-form">
+          <b-col v-if="!mindMapDisplay" class="main-form">
             <b-form-group>
               <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555f">
                 Please insert the desired file name:
@@ -92,16 +92,16 @@
             </div>
           </b-col>
         </b-row>
-        <b-row class="main-row" v-else>
+        <b-row class="main-row2" v-else>
           <b-col class="app">
             <div class="messages">
               <Message v-for="message in messages" :key="message.id" :class="['message', { right: message.isMine }]"
-                :dark="message.isMine" :text="message.text" :author="message.author" />
+                :dark="message.isMine" :text="message.text" :gptLoading="message.gptLoading" :author="message.author" @scroll="scrollToBottom" />
             </div>
             <br>
             <ChatBox class="chat-box" @submit="onSubmit" @reset="handleReset" />
           </b-col>
-          <b-col v-if="requested" class="main-form">
+          <b-col v-if="mindMapDisplay" class="main-form">
             <h3>Here you can see a preview of the result:</h3>
             <p>
               This table has been transformed into a csv format and sent to
@@ -116,8 +116,10 @@
                 class="my-0"></b-pagination>
               <b-form-group>
                 <div class="text-right mt-3">
+                  <b-button class="mr-2" variant="info" @click="generateCoordinates">Generate coordinates</b-button>
                   <b-button class="mr-2" variant="success" @click="doGDriveRequest">Send to GDrive</b-button>
                   <b-button variant="primary" @click="reset">New Request</b-button>
+                  <b-button @click="scrollToBottom">scroll</b-button>
                 </div>
               </b-form-group>
             </div>
@@ -142,7 +144,7 @@ export default {
     return {
       prompt: '',
       loading: false,
-      requested: false,
+      mindMapDisplay: false,
       res: '',
       items: [],
       tempFileName: '',
@@ -175,7 +177,7 @@ export default {
     },
     reset() {
       this.loading = false
-      this.requested = false
+      this.mindMapDisplay = false
       this.items = []
     },
     async requestToAPI() {
@@ -197,13 +199,12 @@ export default {
           console.log('results')
           console.log(results)
           this.items = results
-          this.requested = true
+          this.mindMapDisplay = true
           this.totalRows = this.items.length
           this.res = res
         })
         .catch((err) => {
           this.loading = false
-          console.log('errrr')
           console.log(err)
         })
     },
@@ -213,6 +214,11 @@ export default {
     async requestToGpt(message) {
 
       this.gptHistory.push({ role: 'user', content: message })
+      this.sendMessage({
+        text: '',
+        role: 'assistant',
+        gptLoading: true
+      })
 
       // Request to OpenAI
       const url = '/requestV2/' + 'test'
@@ -220,21 +226,21 @@ export default {
         .$post(url, this.gptHistory)
         .then((res) => {
           console.log(res)
-
+          this.messages.pop()
           const gptAnswer = res.answer.text
-
-          this.checkMindMap(gptAnswer)
 
           this.gptHistory.push({ role: 'assistant', content: gptAnswer })
           this.sendMessage({
             text: gptAnswer,
             role: res.answer.role,
+            gptLoading: false
           })
+
+          this.checkMindMap(gptAnswer)
 
         })
         .catch((err) => {
           this.loading = false
-          console.log('errrr')
           console.log(err)
         })
     },
@@ -245,6 +251,7 @@ export default {
       this.sendMessage({
         text: textv,
         role: 'user',
+        gptLoading: false
       })
 
       this.requestToGpt(textv)
@@ -252,8 +259,9 @@ export default {
     sendMessage(message) {
       const mine = message.role === 'user'
       const auth = message.role
-      this.messages.push({ id: this.id, isMine: mine, text: message.text, author: auth },)
+      this.messages.push({ id: this.id, isMine: mine, text: message.text, author: auth, gptLoading: message.gptLoading },)
       this.id++
+      this.scrollToBottom()
     },
     handleReset() {
       this.chat = false
@@ -261,35 +269,63 @@ export default {
     checkMindMap(gptAnswer) {
       if (gptAnswer.includes('NodeId')) {
 
-        // search for first '[' in gptAnswer
+        // Flag used in case the GPT Answer contains only the mind map
+        let mockMessage = false
+
+        // Search for first '[' in gptAnswer
         const index = gptAnswer.indexOf('[')
 
-        // remove everything before '['
+        // Remove everything before '['
         gptAnswer = gptAnswer.substring(index)
 
-        // search for first ']' in gptAnswer
+        // Search for first ']' in gptAnswer
         const index2 = gptAnswer.indexOf(']')
 
-        // remove everything after ']'
+        // Original Mind Map answer
+        const unprocessedMindMap = gptAnswer.substring(0, index2 + 1)
+
+        if (unprocessedMindMap.length === gptAnswer.length) {
+          console.log('Will print generic message on chat.')
+          mockMessage = true
+        }
+
+        // Remove everything after ']'
         gptAnswer = gptAnswer.substring(0, index2 + 1)
-        console.log('1')
-        console.log(gptAnswer)
 
-        // remove all single quotes
+        // Remove all single quotes
         gptAnswer = gptAnswer.replace(/'/g, '"')
-        console.log('2')
-        console.log(gptAnswer)
 
-        // replace None with "None"
+        // Replace None with "None"
         gptAnswer = gptAnswer.replace(/None/g, '"None"')
 
+        // Update mindMap table display
         this.mindMap = JSON.parse(gptAnswer)
         this.totalRows = this.mindMap.length
 
-        // FIXME: B-TABLE DOES NOT UPDATE WHEN MINDMAP IS UPDATED
-        // this.$set(this.mindMap, JSON.parse(gptAnswer))
-        this.requested = true
+        this.mindMapDisplay = true
+
+        if (mockMessage) {
+          this.messages[this.messages.length - 1].text = 'The generated mind map content is shown on the right.'
+        }
+        else {
+          const lastMessage = this.messages[this.messages.length - 1].text
+          this.messages[this.messages.length - 1].text = lastMessage.replace(unprocessedMindMap, "");
+        }
+
+        this.scrollToBottom()
       }
+    },
+    generateCoordinates() {
+      const textv = 'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Please fill them in order for the mind map be a force based graph.'
+
+      this.sendMessage({
+        text: textv,
+        role: 'user',
+        gptLoading: false
+      })
+
+      this.requestToGpt(textv)
+
     },
     async doGDriveRequest() {
       this.loading = true
@@ -305,13 +341,21 @@ export default {
           console.log(err)
         })
     },
-  },
+    scrollToBottom() {
+      console.log('scroll')
+      const container = this.$el.querySelector(".messages")
+      container.scrollTop = container.scrollHeight;
+    }
+  }
 }
 </script>
 
 <style>
 body {
   background-image: url('@/assets/img/background.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 .app-navbar {
@@ -319,6 +363,10 @@ body {
 }
 
 .main-row {
+  margin-top: 5vh;
+}
+
+.main-row2 {
   margin-top: 5vh;
 }
 
@@ -351,10 +399,9 @@ body {
 </style>
 <style scoped>
 .app {
-  height: 60vh;
+  height: 55vh;
   width: 90vw;
   padding: 2%;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
