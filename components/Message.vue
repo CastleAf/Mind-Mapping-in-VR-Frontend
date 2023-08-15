@@ -26,19 +26,23 @@ export default {
     }
   },
   mounted() {
-    console.log('mounted')
     this.$emit('scroll')
   }
 }
 </script>
 <style scoped>
 .message {
+  font-family: 'Inconsolata', sans-serif;
   background: #e7e7e7;
   color: #0f3559;
   border-radius: 10px;
   padding: 1rem;
   width: fit-content;
   max-width: 90%;
+}
+
+.message-text {
+  font-size: 1.3rem;
 }
 
 .message.dark {

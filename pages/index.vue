@@ -93,7 +93,7 @@
           </b-col>
         </b-row>
         <b-row class="main-row2" v-else>
-          <b-col class="app">
+          <b-col :cols="colSize" class="app">
             <div class="messages">
               <Message v-for="message in messages" :key="message.id" :class="['message', { right: message.isMine }]"
                 :dark="message.isMine" :text="message.text" :gptLoading="message.gptLoading" :author="message.author" @scroll="scrollToBottom" />
@@ -102,12 +102,10 @@
             <ChatBox class="chat-box" @submit="onSubmit" @reset="handleReset" />
           </b-col>
           <b-col v-if="mindMapDisplay" class="main-form">
-            <h3>Here you can see a preview of the result:</h3>
+            <h4>Below you can see a preview of the result:</h4>
             <p>
-              This table has been transformed into a csv format and sent to
-              Google Drive with the name
-              <span class="font-weight-bold">{{ fileName }}.csv</span>.<br />Go
-              check the Mind Map in Noda.io app for a visual representation.
+              This table represents the mind map that was generated based on the prompt. Feel free to add more information
+              by communicating with the GPT model.
             </p>
             <div>
               <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="mindMapData" small>
@@ -119,7 +117,6 @@
                   <b-button class="mr-2" variant="info" @click="generateCoordinates">Generate coordinates</b-button>
                   <b-button class="mr-2" variant="success" @click="doGDriveRequest">Send to GDrive</b-button>
                   <b-button variant="primary" @click="reset">New Request</b-button>
-                  <b-button @click="scrollToBottom">scroll</b-button>
                 </div>
               </b-form-group>
             </div>
@@ -147,6 +144,7 @@ export default {
       mindMapDisplay: false,
       res: '',
       items: [],
+      colSize: 12,
       tempFileName: '',
       fileName: '',
       totalRows: 1,
@@ -178,6 +176,7 @@ export default {
     reset() {
       this.loading = false
       this.mindMapDisplay = false
+      this.colSize = 12
       this.items = []
     },
     async requestToAPI() {
@@ -298,11 +297,11 @@ export default {
         // Replace None with "None"
         gptAnswer = gptAnswer.replace(/None/g, '"None"')
 
-        // Update mindMap table display
         this.mindMap = JSON.parse(gptAnswer)
         this.totalRows = this.mindMap.length
 
         this.mindMapDisplay = true
+        this.colSize = 7
 
         if (mockMessage) {
           this.messages[this.messages.length - 1].text = 'The generated mind map content is shown on the right.'
@@ -342,7 +341,6 @@ export default {
         })
     },
     scrollToBottom() {
-      console.log('scroll')
       const container = this.$el.querySelector(".messages")
       container.scrollTop = container.scrollHeight;
     }
@@ -367,7 +365,8 @@ body {
 }
 
 .main-row2 {
-  margin-top: 5vh;
+  margin-top: 0vh;
+  margin-bottom: 0vh;
 }
 
 .main-form {
@@ -399,9 +398,10 @@ body {
 </style>
 <style scoped>
 .app {
-  height: 55vh;
+  height: 60vh;
   width: 90vw;
   padding: 2%;
+  padding-bottom: 0%;
   display: flex;
   flex-direction: column;
 }

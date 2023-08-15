@@ -1,10 +1,12 @@
 <template>
-  <b-form inline class='chat-box' @submit='onSubmit($event)'>
-    <b-form-input id="inline-form-input-text" class="mb-2 mr-sm-2 mb-sm-0" placeholder="Insert chat here..."
-      v-model='text'></b-form-input>
-    <b-button class="mr-2" :disabled='text === ""' type="submit" variant="primary">Send</b-button>
-    <b-button @click="$emit('reset')" variant="secondary">Go back</b-button>
-  </b-form>
+  <div class="chat-container">
+    <b-form inline class='chat-box' @submit='onSubmit($event)'>
+      <b-form-input id="inline-form-input-text" class="mb-2 mr-sm-2 mb-sm-0" placeholder="Insert chat here..."
+        v-model='text'></b-form-input>
+      <b-button class="mr-2" :disabled='text === ""' type="submit" variant="primary">Send</b-button>
+      <b-button @click="$emit('reset')" variant="secondary">Go back</b-button>
+    </b-form>
+  </div>
 </template>
 
 <script>

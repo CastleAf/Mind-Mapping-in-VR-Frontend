@@ -1,0 +1,9 @@
+@font-face {
+  font-family: 'Lato';
+  src: local('Lato'), url(~assets/fonts/Lato-Regular.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Inconsolata';
+  src: local('Inconsolata'), url(~assets/fonts/Inconsolata-Regular.ttf) format('truetype');
+}
