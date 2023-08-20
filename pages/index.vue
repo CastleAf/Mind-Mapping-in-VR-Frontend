@@ -96,12 +96,13 @@
           <b-col :cols="colSize" class="app">
             <div class="messages">
               <Message v-for="message in messages" :key="message.id" :class="['message', { right: message.isMine }]"
-                :dark="message.isMine" :text="message.text" :gptLoading="message.gptLoading" :author="message.author" @scroll="scrollToBottom" />
+                :dark="message.isMine" :text="message.text" :gptLoading="message.gptLoading" :author="message.author" :mindMap="message.mindMap"
+                @scroll="scrollToBottom" @showMindMap="showModal" />
             </div>
             <br>
             <ChatBox class="chat-box" @submit="onSubmit" @reset="handleReset" />
           </b-col>
-          <b-col v-if="mindMapDisplay" class="main-form">
+          <b-col v-if="false" class="main-form">
             <h4>Below you can see a preview of the result:</h4>
             <p>
               This table represents the mind map that was generated based on the prompt. Feel free to add more information
@@ -124,6 +125,24 @@
         </b-row>
       </b-card>
     </b-container>
+    <!-- B modal -->
+    <b-modal ref="mind-map-modal" hide-footer no-close-on-backdrop title="Generated Mind Map" size="xl">
+      <p class="my-4" style="font-size: large;">
+        This table represents the mind map that was generated based on the prompt. Feel free to add more information
+        by communicating with the GPT model.
+      </p>
+      <div class="d-block text-center">
+        <b-card>
+        <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="mindMapData" small>
+        </b-table>
+        <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm"
+          class="my-0"></b-pagination>
+        </b-card>
+        <div class="mt-3 text-right">
+          <b-button variant="primary" @click="hideModal">Close</b-button>
+        </div>
+      </div>
+    </b-modal>
   </div>
 </template>
 
@@ -149,7 +168,7 @@ export default {
       fileName: '',
       totalRows: 1,
       currentPage: 1,
-      perPage: 9,
+      perPage: 15,
       chat: false,
       data: [],
       id: 2,
@@ -247,6 +266,20 @@ export default {
     onSubmit(event, textv) {
       event.preventDefault()
 
+      if (this.messages.length > 2) {
+        // get last item from this.messages array
+      const lastMessage = this.messages[this.messages.length - 1]
+        if (!lastMessage.isMine && lastMessage.mindMap) {
+          this.messages.pop()
+
+          const previousMessage = this.messages[this.messages.length - 1]
+          if (previousMessage.text.includes('Please consult the mind map by clicking the button below:')) {
+            this.messages[this.messages.length - 1].text = previousMessage.text.replace('Please consult the mind map by clicking the button below:', "")
+          }
+        }
+      }
+      
+
       this.sendMessage({
         text: textv,
         role: 'user',
@@ -258,7 +291,7 @@ export default {
     sendMessage(message) {
       const mine = message.role === 'user'
       const auth = message.role
-      this.messages.push({ id: this.id, isMine: mine, text: message.text, author: auth, gptLoading: message.gptLoading },)
+      this.messages.push({ id: this.id, isMine: mine, text: message.text, author: auth, gptLoading: message.gptLoading, mindMap: JSON.stringify(message.mindMap) },)
       this.id++
       this.scrollToBottom()
     },
@@ -301,15 +334,23 @@ export default {
         this.totalRows = this.mindMap.length
 
         this.mindMapDisplay = true
-        this.colSize = 7
+        // this.colSize = 7
 
         if (mockMessage) {
-          this.messages[this.messages.length - 1].text = 'The generated mind map content is shown on the right.'
+          this.messages[this.messages.length - 1].text = 'The generated mind map content has been generated based on the information you provided. Please consult the mind map by clicking the button below:'
         }
         else {
           const lastMessage = this.messages[this.messages.length - 1].text
           this.messages[this.messages.length - 1].text = lastMessage.replace(unprocessedMindMap, "");
+          this.messages[this.messages.length - 1].text += '\nPlease consult the mind map by clicking the button below:'
         }
+
+        this.sendMessage({
+          text: '',
+          role: 'assistant',
+          gptLoading: false,
+          mindMap: true
+        })
 
         this.scrollToBottom()
       }
@@ -343,7 +384,13 @@ export default {
     scrollToBottom() {
       const container = this.$el.querySelector(".messages")
       container.scrollTop = container.scrollHeight;
-    }
+    },
+    showModal() {
+      this.$refs['mind-map-modal'].show()
+    },
+    hideModal() {
+      this.$refs['mind-map-modal'].hide()
+    },
   }
 }
 </script>

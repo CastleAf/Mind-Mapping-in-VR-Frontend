@@ -5,6 +5,7 @@
         variant="primary"></b-spinner>&nbsp;<b-spinner small label="Small Spinner" type="grow"
         variant="primary"></b-spinner>&nbsp;<b-spinner small label="Small Spinner" type="grow"
         variant="primary"></b-spinner></span>
+      <b-button v-if="mindMap" @click="showMindMap" variant="success">See MindMap</b-button>
   </div>
 </template>
 
@@ -18,7 +19,8 @@ export default {
     'text', // Content of the message
     'author', // Author of the message
     'dark', // Background variant of the box
-    'gptLoading' // GPT is processing request
+    'gptLoading', // GPT is processing request
+    'mindMap' // Boolean to check if mind map modal button should be shown
   ],
   computed: {
     getIcon() {
@@ -27,6 +29,11 @@ export default {
   },
   mounted() {
     this.$emit('scroll')
+  },
+  methods: {
+    showMindMap() {
+      this.$emit('showMindMap')
+    }
   }
 }
 </script>
