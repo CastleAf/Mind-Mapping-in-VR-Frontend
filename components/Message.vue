@@ -5,7 +5,9 @@
         variant="primary"></b-spinner>&nbsp;<b-spinner small label="Small Spinner" type="grow"
         variant="primary"></b-spinner>&nbsp;<b-spinner small label="Small Spinner" type="grow"
         variant="primary"></b-spinner></span>
-      <b-button v-if="mindMap" @click="showMindMap" variant="success">See MindMap</b-button>
+    <div v-if="mindMap" class="mt-2">
+      <b-button @click="showMindMap" variant="success">Open Mind Map</b-button>
+    </div>
   </div>
 </template>
 

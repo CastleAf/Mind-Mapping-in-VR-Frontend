@@ -165,6 +165,7 @@ export default {
       items: [],
       colSize: 12,
       tempFileName: '',
+      mindMapButton: false,
       fileName: '',
       totalRows: 1,
       currentPage: 1,
@@ -266,20 +267,6 @@ export default {
     onSubmit(event, textv) {
       event.preventDefault()
 
-      if (this.messages.length > 2) {
-        // get last item from this.messages array
-      const lastMessage = this.messages[this.messages.length - 1]
-        if (!lastMessage.isMine && lastMessage.mindMap) {
-          this.messages.pop()
-
-          const previousMessage = this.messages[this.messages.length - 1]
-          if (previousMessage.text.includes('Please consult the mind map by clicking the button below:')) {
-            this.messages[this.messages.length - 1].text = previousMessage.text.replace('Please consult the mind map by clicking the button below:', "")
-          }
-        }
-      }
-      
-
       this.sendMessage({
         text: textv,
         role: 'user',
@@ -300,6 +287,13 @@ export default {
     },
     checkMindMap(gptAnswer) {
       if (gptAnswer.includes('NodeId')) {
+
+        // Clean previous Mind Map buttons
+        if (this.mindMapButton) {
+          this.messages.forEach(element => {
+            element.mindMap = false
+          });
+        }
 
         // Flag used in case the GPT Answer contains only the mind map
         let mockMessage = false
@@ -337,21 +331,16 @@ export default {
         // this.colSize = 7
 
         if (mockMessage) {
-          this.messages[this.messages.length - 1].text = 'The generated mind map content has been generated based on the information you provided. Please consult the mind map by clicking the button below:'
+          this.messages[this.messages.length - 1].text = 'The generated mind map content has been generated based on the information you provided.'
+          this.messages[this.messages.length - 1].mindMap = true
         }
         else {
           const lastMessage = this.messages[this.messages.length - 1].text
           this.messages[this.messages.length - 1].text = lastMessage.replace(unprocessedMindMap, "");
-          this.messages[this.messages.length - 1].text += '\nPlease consult the mind map by clicking the button below:'
+          this.messages[this.messages.length - 1].mindMap = true
         }
 
-        this.sendMessage({
-          text: '',
-          role: 'assistant',
-          gptLoading: false,
-          mindMap: true
-        })
-
+        this.mindMapButton = true
         this.scrollToBottom()
       }
     },
