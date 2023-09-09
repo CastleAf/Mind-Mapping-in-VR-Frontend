@@ -44,8 +44,14 @@
               <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555f">
                 Please insert the desired file name:
               </h5>
-              <b-form-input id="input-1" v-model="tempFileName" type="text" :state="fileName.length > 0"
-                placeholder="Enter file name" required></b-form-input>
+              <b-form-input
+                id="input-1"
+                v-model="tempFileName"
+                type="text"
+                :state="fileName.length > 0"
+                placeholder="Enter file name"
+                required
+              ></b-form-input>
             </b-form-group>
             <b-form-group class="mt-2">
               <h5 class="ml-1" style="font-weight: bold; color: #45555f">
@@ -53,8 +59,13 @@
               </h5>
               <b-row class="mt-2">
                 <b-col>
-                  <b-form-textarea id="textarea-large" v-model="prompt" size="lg" rows="11"
-                    placeholder="Input text here..."></b-form-textarea>
+                  <b-form-textarea
+                    id="textarea-large"
+                    v-model="prompt"
+                    size="lg"
+                    rows="11"
+                    placeholder="Input text here..."
+                  ></b-form-textarea>
                   <p v-if="prompt.length > 15000" style="color: #dc3545">
                     Prompt too long, please keep it lower than 2000 words.
                     {{ prompt.length }}
@@ -64,81 +75,83 @@
             </b-form-group>
             <b-form-group>
               <div class="submit mt-3">
-                <b-spinner v-if="loading" class="mr-2" variant="primary" label="Spinning"></b-spinner>
-                <b-button :disabled="loading || tempFileName.length == 0" class="mr-2" variant="primary"
-                  @click="submit">Submit</b-button>
+                <b-spinner
+                  v-if="loading"
+                  class="mr-2"
+                  variant="primary"
+                  label="Spinning"
+                ></b-spinner>
                 <b-button variant="info" @click="activateChat">Chat</b-button>
               </div>
             </b-form-group>
-          </b-col>
-          <b-col v-else class="main-form">
-            <h3>Here you can see a preview of the result:</h3>
-            <p>
-              This table has been transformed into a csv format and sent to
-              Google Drive with the name
-              <span class="font-weight-bold">{{ fileName }}.csv</span>.<br />Go
-              check the Mind Map in Noda.io app for a visual representation.
-            </p>
-            <div>
-              <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="items" small>
-              </b-table>
-              <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm"
-                class="my-0"></b-pagination>
-              <b-form-group>
-                <div class="text-right mt-3">
-                  <b-button variant="primary" @click="reset">New Request</b-button>
-                </div>
-              </b-form-group>
-            </div>
           </b-col>
         </b-row>
         <b-row class="main-row2" v-else>
           <b-col :cols="colSize" class="app">
             <div class="messages">
-              <Message v-for="message in messages" :key="message.id" :class="['message', { right: message.isMine }]"
-                :dark="message.isMine" :text="message.text" :gptLoading="message.gptLoading" :author="message.author" :mindMap="message.mindMap"
-                @scroll="scrollToBottom" @showMindMap="showModal" />
+              <Message
+                v-for="message in messages"
+                :key="message.id"
+                :class="['message', { right: message.isMine }]"
+                :dark="message.isMine"
+                :text="message.text"
+                :gptLoading="message.gptLoading"
+                :author="message.author"
+                :mindMap="message.mindMap"
+                @scroll="scrollToBottom"
+                @showMindMap="showModal"
+              />
             </div>
-            <br>
+            <br />
             <ChatBox class="chat-box" @submit="onSubmit" @reset="handleReset" />
-          </b-col>
-          <b-col v-if="false" class="main-form">
-            <h4>Below you can see a preview of the result:</h4>
-            <p>
-              This table represents the mind map that was generated based on the prompt. Feel free to add more information
-              by communicating with the GPT model.
-            </p>
-            <div>
-              <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="mindMapData" small>
-              </b-table>
-              <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm"
-                class="my-0"></b-pagination>
-              <b-form-group>
-                <div class="text-right mt-3">
-                  <b-button class="mr-2" variant="info" @click="generateCoordinates">Generate coordinates</b-button>
-                  <b-button class="mr-2" variant="success" @click="doGDriveRequest">Send to GDrive</b-button>
-                  <b-button variant="primary" @click="reset">New Request</b-button>
-                </div>
-              </b-form-group>
-            </div>
           </b-col>
         </b-row>
       </b-card>
     </b-container>
     <!-- B modal -->
-    <b-modal ref="mind-map-modal" hide-footer no-close-on-backdrop title="Generated Mind Map" size="xl">
-      <p class="my-4" style="font-size: large;">
-        This table represents the mind map that was generated based on the prompt. Feel free to add more information
-        by communicating with the GPT model.
+    <b-modal
+      ref="mind-map-modal"
+      hide-footer
+      no-close-on-backdrop
+      title="Generated Mind Map"
+      size="huge"
+    >
+      <p class="my-4" style="font-size: large">
+        This table represents the mind map that was generated based on the
+        prompt. Feel free to add more information by communicating with the GPT
+        model.
       </p>
       <div class="d-block text-center">
-        <b-card>
-        <b-table striped hover :per-page="perPage" :current-page="currentPage" :items="mindMapData" small>
-        </b-table>
-        <b-pagination v-model="currentPage" :total-rows="totalRows" :per-page="perPage" align="fill" size="sm"
-          class="my-0"></b-pagination>
+        <b-card v-if="showTable">
+          <b-table
+            striped
+            hover
+            :per-page="perPage"
+            :current-page="currentPage"
+            :items="mindMapData"
+            small
+          >
+          </b-table>
+          <b-pagination
+            v-model="currentPage"
+            :total-rows="totalRows"
+            :per-page="perPage"
+            align="fill"
+            size="sm"
+            class="my-0"
+          ></b-pagination>
+        </b-card>
+        <b-card v-else>
+          <vue2-org-tree
+              labelClassName="bg-tomato"
+              :collapsable="false"
+              :data="treeData"
+            />
         </b-card>
         <div class="mt-3 text-right">
+          <b-button variant="info" @click="switchTable">
+            {{ showTable ? 'Show Mind Map' : 'Show Table' }}
+          </b-button>
           <b-button variant="primary" @click="hideModal">Close</b-button>
         </div>
       </div>
@@ -159,6 +172,19 @@ export default {
   data() {
     return {
       prompt: '',
+      showTable: false,
+      treeData: {
+        label: 'root',
+        expand: true,
+        children: [
+          { label: 'child 1' },
+          {
+            label: 'child 2',
+            children: [{ label: 'child 4' }, { label: 'child 5' }],
+          },
+          { label: 'child 3' },
+        ],
+      },
       loading: false,
       mindMapDisplay: false,
       res: '',
@@ -180,7 +206,7 @@ export default {
           content: "You are helping the User to build a Mind Map. The user will prompt for you to create a Mind Map based on a text input. When you have the information needed to build the mind map, please answer in the mind map format, such as: [{'NodeId': 'value', 'NomeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}, {'NodeId': 'value', 'NomeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}].",
         }
       ],
-      mindMap: []
+      mindMap: [],
     }
   },
   computed: {
@@ -189,54 +215,21 @@ export default {
     },
   },
   methods: {
-    async submit() {
-      this.loading = true
-      await this.requestToAPI()
-    },
     reset() {
       this.loading = false
       this.mindMapDisplay = false
       this.colSize = 12
       this.items = []
     },
-    async requestToAPI() {
-      this.tempFileName = this.tempFileName.replace(/ /g, '_')
-
-      // Avoid incorrect name displaying in case user changes
-      // filename while request is loading
-      this.fileName = this.tempFileName
-
-      const url = '/request/' + this.fileName
-      console.log(url)
-      await this.$axios
-        .$post(url, {
-          val: this.prompt,
-        })
-        .then((res) => {
-          this.loading = false
-          const results = res.result
-          console.log('results')
-          console.log(results)
-          this.items = results
-          this.mindMapDisplay = true
-          this.totalRows = this.items.length
-          this.res = res
-        })
-        .catch((err) => {
-          this.loading = false
-          console.log(err)
-        })
-    },
     activateChat() {
       this.chat = true
     },
     async requestToGpt(message) {
-
       this.gptHistory.push({ role: 'user', content: message })
       this.sendMessage({
         text: '',
         role: 'assistant',
-        gptLoading: true
+        gptLoading: true,
       })
 
       // Request to OpenAI
@@ -252,11 +245,10 @@ export default {
           this.sendMessage({
             text: gptAnswer,
             role: res.answer.role,
-            gptLoading: false
+            gptLoading: false,
           })
 
           this.checkMindMap(gptAnswer)
-
         })
         .catch((err) => {
           this.loading = false
@@ -270,7 +262,7 @@ export default {
       this.sendMessage({
         text: textv,
         role: 'user',
-        gptLoading: false
+        gptLoading: false,
       })
 
       this.requestToGpt(textv)
@@ -278,7 +270,14 @@ export default {
     sendMessage(message) {
       const mine = message.role === 'user'
       const auth = message.role
-      this.messages.push({ id: this.id, isMine: mine, text: message.text, author: auth, gptLoading: message.gptLoading, mindMap: JSON.stringify(message.mindMap) },)
+      this.messages.push({
+        id: this.id,
+        isMine: mine,
+        text: message.text,
+        author: auth,
+        gptLoading: message.gptLoading,
+        mindMap: JSON.stringify(message.mindMap),
+      })
       this.id++
       this.scrollToBottom()
     },
@@ -287,12 +286,11 @@ export default {
     },
     checkMindMap(gptAnswer) {
       if (gptAnswer.includes('NodeId')) {
-
         // Clean previous Mind Map buttons
         if (this.mindMapButton) {
-          this.messages.forEach(element => {
+          this.messages.forEach((element) => {
             element.mindMap = false
-          });
+          })
         }
 
         // Flag used in case the GPT Answer contains only the mind map
@@ -331,30 +329,38 @@ export default {
         // this.colSize = 7
 
         if (mockMessage) {
-          this.messages[this.messages.length - 1].text = 'The generated mind map content has been generated based on the information you provided.'
+          this.messages[this.messages.length - 1].text =
+            'The generated mind map content has been generated based on the information you provided.'
           this.messages[this.messages.length - 1].mindMap = true
-        }
-        else {
+        } else {
           const lastMessage = this.messages[this.messages.length - 1].text
-          this.messages[this.messages.length - 1].text = lastMessage.replace(unprocessedMindMap, "");
+          this.messages[this.messages.length - 1].text = lastMessage.replace(
+            unprocessedMindMap,
+            ''
+          )
           this.messages[this.messages.length - 1].mindMap = true
         }
+
+        console.log('ANSWER')
+        console.log(gptAnswer)
+
+        this.generateTree(this.mindMap)
 
         this.mindMapButton = true
         this.scrollToBottom()
       }
     },
     generateCoordinates() {
-      const textv = 'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Please fill them in order for the mind map be a force based graph.'
+      const textv =
+        'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Please fill them in order for the mind map be a force based graph.'
 
       this.sendMessage({
         text: textv,
         role: 'user',
-        gptLoading: false
+        gptLoading: false,
       })
 
       this.requestToGpt(textv)
-
     },
     async doGDriveRequest() {
       this.loading = true
@@ -371,8 +377,8 @@ export default {
         })
     },
     scrollToBottom() {
-      const container = this.$el.querySelector(".messages")
-      container.scrollTop = container.scrollHeight;
+      const container = this.$el.querySelector('.messages')
+      container.scrollTop = container.scrollHeight
     },
     showModal() {
       this.$refs['mind-map-modal'].show()
@@ -380,11 +386,127 @@ export default {
     hideModal() {
       this.$refs['mind-map-modal'].hide()
     },
-  }
+    generateTree(treeData) {
+      // Firstly, sort tree by NodeLevel
+      treeData.sort((a, b) => (+a.NodeLevel > +b.NodeLevel ? 1 : -1))
+
+      const newData = treeData.map(({ NodeName: label, ...rest }) => ({
+        label,
+        ...rest,
+      }))
+
+      const map = new Map();
+
+      // Create a mapping between NodeId and increasing integers
+      for (let i = 0; i < newData.length; i++) {
+        map.set(newData[i].NodeId, i); 
+      }
+
+      // Replace NodeId and FromNode with map values
+      for (let i = 0; i < newData.length; i++) {
+        newData[i].NodeId = map.get(newData[i].NodeId)
+        newData[i].FromNode = map.get(newData[i].FromNode)
+      }
+
+      const objsPerLevel = []
+
+      // Then, create array of arrays of objects, per node level
+      for (let i = 0; i < treeData.length; i++) {
+        if (objsPerLevel[treeData[i].NodeLevel - 1] === undefined) {
+          objsPerLevel[treeData[i].NodeLevel - 1] = []
+        }
+        objsPerLevel[treeData[i].NodeLevel - 1].push(treeData[i])
+      }
+
+      console.log('Data to parse')
+      console.log(newData)
+
+      this.list_to_tree(newData)
+      /* 
+      // Finally, create tree
+      for (let level = 0; level < objsPerLevel.length; level++) {
+        for (let i = 0; i < objsPerLevel[level].length; i++) {
+          if (level === '0') {
+            finalObj.label = objsPerLevel[level][i].NodeName
+            finalObj.id = objsPerLevel[level][i].NodeId
+          } else {
+            finalObj[level - 1].children.push({
+              label: objsPerLevel[level][i].NodeName,
+              id: objsPerLevel[level][i].NodeId,
+              expand: true,
+              children: [],
+            })
+          }
+        }
+      } */
+    },
+    list_to_tree(list) {
+      // console.log(list)
+
+      const map = {}
+      let node
+      const roots = []
+      let i
+
+      for (i = 0; i < list.length; i += 1) {
+        map[list[i].NodeId] = i // initialize the map
+        list[i].children = [] // initialize the children
+      }
+
+      console.log(map)
+      console.log(list)
+
+      for (i = 0; i < list.length; i += 1) {
+        node = list[i]
+        if (node.FromNode !== '' && node.FromNode !== null && node.FromNode !== undefined && node.FromNode !== 'None') {
+          // if you have dangling branches check that map[node.FromNode] exists
+          list[map[node.FromNode]].children.push(node)
+        } else {
+          roots.push(node)
+        }
+      }
+      console.log('roots time')
+      console.log(roots)
+      this.treeData = roots[0]
+      return roots
+    },
+    switchTable() {
+      this.showTable = !this.showTable
+    },
+  },
+  mounted() {
+    /* const treeData = [
+      { NodeId: '1', NodeName: 'Embryology', FromNode: '', NodeLevel: '1' },
+      { NodeId: '2', NodeName: 'Ontogeny', FromNode: '1', NodeLevel: '2' },
+      { NodeId: '3', NodeName: 'Phylogeny', FromNode: '1', NodeLevel: '2' },
+      {
+        NodeId: '4',
+        NodeName: 'Vertebrate Animals',
+        FromNode: '2',
+        NodeLevel: '3',
+      },
+      { NodeId: '5', NodeName: 'Fertilization', FromNode: '4', NodeLevel: '4' },
+      { NodeId: '6', NodeName: 'Segmentation', FromNode: '5', NodeLevel: '5' },
+      {
+        NodeId: '7',
+        NodeName: 'Differentiation of Cells',
+        FromNode: '5',
+        NodeLevel: '5',
+      },
+    ] */
+
+    // this.generateTree(treeData)
+  },
 }
 </script>
 
 <style>
+.modal .modal-huge {
+  max-width: 90vw;
+  width: 90vw;
+  overflow: auto;
+}
+
 body {
   background-image: url('@/assets/img/background.jpg');
   background-repeat: no-repeat;
@@ -431,6 +553,10 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+.bg-tomato {
+  background-color: #ff6347 !important;
+  color: white;
+}
 </style>
 <style scoped>
 .app {
@@ -448,7 +574,7 @@ body {
   padding: 1rem;
 }
 
-.message+.message {
+.message + .message {
   margin-top: 1rem;
 }
 

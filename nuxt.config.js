@@ -24,11 +24,12 @@ export default {
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [
     '~/assets/scss/app.scss',
-    '~/assets/fonts/lato.css'
+    '~/assets/fonts/lato.css',
+    '~/assets/vue-org-tree.css'
   ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
-  plugins: [],
+  plugins: ['@/plugins/vue-org-tree.js'],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
