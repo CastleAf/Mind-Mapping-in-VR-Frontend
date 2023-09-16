@@ -108,7 +108,8 @@
         </b-row>
       </b-card>
     </b-container>
-    <!-- B modal -->
+
+    <!-- B modal - Main Modal -->
     <b-modal
       ref="mind-map-modal"
       hide-footer
@@ -117,12 +118,20 @@
       size="huge"
     >
       <p class="my-4" style="font-size: large">
-        This table represents the mind map that was generated based on the
+        Below you can observe the mind map that was generated based on the
         prompt. Feel free to add more information by communicating with the GPT
         model.
       </p>
-      <div class="d-block text-center">
-        <b-card v-if="showTable">
+      <div class="text-right my-1">
+        <b-button variant="info" @click="switchTable">
+          {{ showTable ? 'Switch to Graph View' : 'Switch to Table View' }}
+        </b-button>
+      </div>
+      <div>
+        <b-card
+          class="d-block text-center w-75 ml-auto mr-auto"
+          v-if="showTable"
+        >
           <b-table
             striped
             hover
@@ -141,20 +150,43 @@
             class="my-0"
           ></b-pagination>
         </b-card>
-        <b-card v-else>
-          <vue2-org-tree
+        <b-card v-else class="d-block text-center">
+          <div>
+            <vue2-org-tree
               labelClassName="bg-tomato"
               :collapsable="false"
               :data="treeData"
             />
+          </div>
         </b-card>
+        <div>
+          <br />
+          <hr />
+          <br />
+          <div>
+            <p class="my-4" style="font-size: large">
+              Does everything look okay? If so, you can now generate the
+              coordinates for each node and export the mind map to Google Drive.
+            </p>
+          </div>
+        </div>
         <div class="mt-3 text-right">
-          <b-button variant="info" @click="switchTable">
-            {{ showTable ? 'Show Mind Map' : 'Show Table' }}
-          </b-button>
           <b-button variant="primary" @click="hideModal">Close</b-button>
         </div>
       </div>
+    </b-modal>
+
+    <b-modal
+      ref="error-modal"
+      hide-footer
+      no-close-on-backdrop
+      title="Error"
+      size="small"
+    >
+    <p> There seems to have been a Syntax Error from the GPT.</p>
+    <p> Since we're working with an AI model, it is expected that these errors happen sometimes.</p>
+    <p> Unfortunately a new chat session will have to be created. Please click the button below to do so.</p>
+    <b-button variant="success" @click="newChat"> New Chat </b-button>
     </b-modal>
   </div>
 </template>
@@ -188,6 +220,7 @@ export default {
       loading: false,
       mindMapDisplay: false,
       res: '',
+      rootNodeError: false,
       items: [],
       colSize: 12,
       tempFileName: '',
@@ -195,16 +228,17 @@ export default {
       fileName: '',
       totalRows: 1,
       currentPage: 1,
-      perPage: 15,
+      perPage: 10,
       chat: false,
       data: [],
       id: 2,
       messages: [],
       gptHistory: [
         {
-          role: "system",
-          content: "You are helping the User to build a Mind Map. The user will prompt for you to create a Mind Map based on a text input. When you have the information needed to build the mind map, please answer in the mind map format, such as: [{'NodeId': 'value', 'NomeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}, {'NodeId': 'value', 'NomeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}].",
-        }
+          role: 'system',
+          content:
+            "You are helping the User to build a Mind Map. The user will prompt for you to create a Mind Map based on a text input. When you have the information needed to build the mind map, please answer in the mind map format, such as: [{'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}, {'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}].",
+        },
       ],
       mindMap: [],
     }
@@ -221,8 +255,16 @@ export default {
       this.colSize = 12
       this.items = []
     },
-    activateChat() {
+    async activateChat() {
       this.chat = true
+
+      this.sendMessage({
+        text: 'Hello!',
+        role: 'user',
+        gptLoading: false,
+      })
+
+      await this.requestToGpt('Hello!')
     },
     async requestToGpt(message) {
       this.gptHistory.push({ role: 'user', content: message })
@@ -253,6 +295,12 @@ export default {
         .catch((err) => {
           this.loading = false
           console.log(err)
+          
+          if (JSON.stringify(err).includes('SyntaxError')) {
+            console.log('Taking care of Syntax Error')
+
+            this.showErrorModal()
+          }
         })
     },
     // This method will be called when a new message is sent
@@ -285,6 +333,8 @@ export default {
       this.chat = false
     },
     checkMindMap(gptAnswer) {
+      this.rootNodeError = false
+
       if (gptAnswer.includes('NodeId')) {
         // Clean previous Mind Map buttons
         if (this.mindMapButton) {
@@ -316,17 +366,22 @@ export default {
         // Remove everything after ']'
         gptAnswer = gptAnswer.substring(0, index2 + 1)
 
-        // Remove all single quotes
-        gptAnswer = gptAnswer.replace(/'/g, '"')
+        // Replace None with "None" FIXME: Check for error here
+        gptAnswer = gptAnswer.replace(' None', '"None"')
 
-        // Replace None with "None"
-        gptAnswer = gptAnswer.replace(/None/g, '"None"')
+        // Replace first single quotes (not in words) into double quotes
+        gptAnswer = gptAnswer.replace(/(?<!\w)'/g, '"')
+
+        // Replace last single quotes (not in words) into double quotes
+        gptAnswer = gptAnswer.replace(/'(?!\w)/g, '"')
+
+        console.log('Before Parse!!')
+        console.log(gptAnswer)
 
         this.mindMap = JSON.parse(gptAnswer)
         this.totalRows = this.mindMap.length
 
         this.mindMapDisplay = true
-        // this.colSize = 7
 
         if (mockMessage) {
           this.messages[this.messages.length - 1].text =
@@ -346,7 +401,9 @@ export default {
 
         this.generateTree(this.mindMap)
 
-        this.mindMapButton = true
+        if (!this.rootNodeError) {
+          this.mindMapButton = true
+        }
         this.scrollToBottom()
       }
     },
@@ -378,13 +435,21 @@ export default {
     },
     scrollToBottom() {
       const container = this.$el.querySelector('.messages')
-      container.scrollTop = container.scrollHeight
+      if (container && container.scrollTop !== null) {
+        container.scrollTop = container.scrollHeight
+      }
     },
     showModal() {
       this.$refs['mind-map-modal'].show()
     },
     hideModal() {
       this.$refs['mind-map-modal'].hide()
+    },
+    showErrorModal() {
+      this.$refs['error-modal'].show()
+    },
+    hideErrorModal() {
+      this.$refs['error-modal'].hide()
     },
     generateTree(treeData) {
       // Firstly, sort tree by NodeLevel
@@ -395,11 +460,11 @@ export default {
         ...rest,
       }))
 
-      const map = new Map();
+      const map = new Map()
 
       // Create a mapping between NodeId and increasing integers
       for (let i = 0; i < newData.length; i++) {
-        map.set(newData[i].NodeId, i); 
+        map.set(newData[i].NodeId, i)
       }
 
       // Replace NodeId and FromNode with map values
@@ -458,7 +523,12 @@ export default {
 
       for (i = 0; i < list.length; i += 1) {
         node = list[i]
-        if (node.FromNode !== '' && node.FromNode !== null && node.FromNode !== undefined && node.FromNode !== 'None') {
+        if (
+          node.FromNode !== '' &&
+          node.FromNode !== null &&
+          node.FromNode !== undefined &&
+          node.FromNode !== 'None'
+        ) {
           // if you have dangling branches check that map[node.FromNode] exists
           list[map[node.FromNode]].children.push(node)
         } else {
@@ -467,12 +537,54 @@ export default {
       }
       console.log('roots time')
       console.log(roots)
+      if (roots.length > 1) {
+        console.log('There are more than one root node. Printing message...')
+
+        this.rootNodeError = true
+        
+        const textv = "There seems to be more than one root node. Can you rebuild the mind map, having only one root node?"
+
+        this.sendMessage({
+          text: textv,
+          role: 'user',
+          gptLoading: false,
+        })
+
+        this.requestToGpt(textv)
+      }
       this.treeData = roots[0]
       return roots
     },
     switchTable() {
       this.showTable = !this.showTable
     },
+    async newChat() {
+
+      this.hideErrorModal()
+      console.log('Reset on chat')
+
+      // This method is called on the syntax error modal
+      // Reset and start a new chat.
+      this.messages = []
+      this.gptHistory = [
+        {
+          role: 'system',
+          content:
+            "You are helping the User to build a Mind Map. The user will prompt for you to create a Mind Map based on a text input. When you have the information needed to build the mind map, please answer in the mind map format, such as: [{'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}, {'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}].",
+        },
+      ]
+      this.mindMap = []
+      this.id = 2
+
+      this.sendMessage({
+        text: 'Hello!',
+        role: 'user',
+        gptLoading: false,
+      })
+
+      await this.requestToGpt('Hello!')
+
+    }
   },
   mounted() {
     /* const treeData = [
@@ -494,8 +606,23 @@ export default {
         NodeLevel: '5',
       },
     ] */
-
     // this.generateTree(treeData)
+    // console.log('here we go')
+    // const temp = "[{NodeId: 1, NodeName: Ovaries, FromNode: 0, NodeLevel: 1}, {NodeId: 2, NodeName: Development of Ova, FromNode: 0, NodeLevel: 1}, {NodeId: 3, NodeName: Size and Location of Ova, FromNode: 0, NodeLevel: 1}, {NodeId: 4, NodeName: Structure of Ovum, FromNode: 2, NodeLevel: 2}, {NodeId: 5, NodeName: Coverings of the Ovum, FromNode: 2, NodeLevel: 2}, {NodeId: 6, NodeName: Discharge of Ova, FromNode: 2, NodeLevel: 2}, {NodeId: 7, NodeName: Maturation of the Ovum, FromNode: 2, NodeLevel: 2}, {NodeId: 8, NodeName: Germinal Vesicle, FromNode: 4, NodeLevel: 3}, {NodeId: 9, NodeName: Yolk, FromNode: 4, NodeLevel: 3}]"
+    // const abc = temp.replace(/: /g, ': "')
+    // const abcTempObj = abc.replace(/,/g, '",')
+    // const abcTempObj2 = abcTempObj.replace(/}"/g, '}')
+    // const abcObj = abcTempObj2.replace(/}/g, '"}')
+    // const abcObj2 = abcObj.replace(/{/g, '{"')
+    // const abcObj3 = abcObj2.replace(/:/g, '":')
+    // const abcObj4 = abcObj3.replace(/", /g, '", "')
+    // console.log(abcObj4)
+    // const other = "[{'NodeId': '1', 'NodeName': 'Pleasure and Pain', 'FromNode': '', 'NodeLevel': '0'}, {'NodeId': '2', 'NodeName': 'Introduction and explanation of the mistaken idea that didn't make it', 'FromNode': '1', 'NodeLevel': '1'}, {'NodeId': '3', 'NodeName': 'Account of the system and teachings', 'FromNode': '1', 'NodeLevel': '1'}]"
+    // const temp = other.replace(/(?<!\w)'/g, '"')
+    // const final = temp.replace(/'(?!\w)/g, '"')
+    // console.log(final)
+    // console.log(JSON.parse(final))
+    // console.log(JSON.parse(abcObj4))
   },
 }
 </script>
@@ -554,8 +681,9 @@ body {
   justify-content: flex-end;
 }
 .bg-tomato {
-  background-color: #ff6347 !important;
+  background-color: #0f3559 !important;
   color: white;
+  font-weight: bold;
 }
 </style>
 <style scoped>
