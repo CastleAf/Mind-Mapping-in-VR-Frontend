@@ -9,103 +9,116 @@
     <b-container class="app-container col d-flex justify-content-center" fluid>
       <!-- Content here -->
       <b-card class="main-card">
-        <b-row v-if="!chat" class="main-row">
-          <b-col class="main-description ml-3" fluid>
-            <h2>Mind Mapping in VR</h2>
+        <div v-if="!chat">
+          <b-row class="main-row">
+            <b-col class="main-description ml-3" fluid>
+              <h2>Mind Mapping in VR</h2>
 
-            <p>
-              Convert Text to Mind Maps: Our web app harnesses the power of
-              OpenAI to transform textual information into visual mind maps.
-              Simply enter your text, and our app will generate a comprehensive
-              mind map that organizes and visualizes the key concepts and
-              relationships within your content.
-            </p>
-            <p>
-              How does it work? Our app utilizes the OpenAI API, a cutting-edge
-              language model, to process your text and generate a structured
-              mind map. It analyzes the content, identifies important keywords
-              and concepts, and arranges them hierarchically to create a clear
-              and visually appealing mind map.
-            </p>
-            <p>
-              To get started, just type or paste your text into our app, and
-              with a click of a button, watch as your information is transformed
-              into a table describing a Mind Map.
-            </p>
-            <p>
-              Whether you're looking to organize your thoughts, brainstorm
-              ideas, or simplify complex information, our text-to-mind-map
-              feature provides a powerful tool to enhance your understanding and
-              creativity.
-            </p>
-          </b-col>
-          <b-col v-if="!mindMapDisplay" class="main-form">
-            <b-form-group>
-              <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555f">
-                Please insert the desired file name:
-              </h5>
-              <b-form-input
-                id="input-1"
-                v-model="tempFileName"
-                type="text"
-                :state="fileName.length > 0"
-                placeholder="Enter file name"
-                required
-              ></b-form-input>
-            </b-form-group>
-            <b-form-group class="mt-2">
-              <h5 class="ml-1" style="font-weight: bold; color: #45555f">
-                Please insert your textual information below:
-              </h5>
-              <b-row class="mt-2">
-                <b-col>
-                  <b-form-textarea
-                    id="textarea-large"
-                    v-model="prompt"
-                    size="lg"
-                    rows="11"
-                    placeholder="Input text here..."
-                  ></b-form-textarea>
-                  <p v-if="prompt.length > 15000" style="color: #dc3545">
-                    Prompt too long, please keep it lower than 2000 words.
-                    {{ prompt.length }}
-                  </p>
-                </b-col>
-              </b-row>
-            </b-form-group>
-            <b-form-group>
-              <div class="submit mt-3">
-                <b-spinner
-                  v-if="loading"
-                  class="mr-2"
-                  variant="primary"
-                  label="Spinning"
-                ></b-spinner>
-                <b-button variant="info" @click="activateChat">Chat</b-button>
+              <p>
+                Convert Text to Mind Maps: Our web app harnesses the power of
+                OpenAI to transform textual information into visual mind maps.
+                Simply enter your text, and our app will generate a
+                comprehensive mind map that organizes and visualizes the key
+                concepts and relationships within your content.
+              </p>
+              <p>
+                How does it work? Our app utilizes the OpenAI API, a
+                cutting-edge language model, to process your text and generate a
+                structured mind map. It analyzes the content, identifies
+                important keywords and concepts, and arranges them
+                hierarchically to create a clear and visually appealing mind
+                map.
+              </p>
+              <p>
+                To get started, just type or paste your text into our app, and
+                with a click of a button, watch as your information is
+                transformed into a table describing a Mind Map.
+              </p>
+              <p>
+                Whether you're looking to organize your thoughts, brainstorm
+                ideas, or simplify complex information, our text-to-mind-map
+                feature provides a powerful tool to enhance your understanding
+                and creativity.
+              </p>
+            </b-col>
+            <b-col v-if="!mindMapDisplay" class="main-form">
+              <b-form-group>
+                <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555f">
+                  Please insert the desired file name:
+                </h5>
+                <b-form-input
+                  id="input-1"
+                  v-model="tempFileName"
+                  type="text"
+                  :state="fileName.length > 0"
+                  placeholder="Enter file name"
+                  required
+                ></b-form-input>
+              </b-form-group>
+              <b-form-group class="mt-2">
+                <h5 class="ml-1" style="font-weight: bold; color: #45555f">
+                  Please insert your textual information below:
+                </h5>
+                <b-row class="mt-2">
+                  <b-col>
+                    <b-form-textarea
+                      id="textarea-large"
+                      v-model="prompt"
+                      size="lg"
+                      rows="11"
+                      placeholder="Input text here..."
+                    ></b-form-textarea>
+                    <p v-if="prompt.length > 15000" style="color: #dc3545">
+                      Prompt too long, please keep it lower than 2000 words.
+                      {{ prompt.length }}
+                    </p>
+                  </b-col>
+                </b-row>
+              </b-form-group>
+              <b-form-group>
+                <div class="submit mt-3">
+                  <b-spinner
+                    v-if="loading"
+                    class="mr-2"
+                    variant="primary"
+                    label="Spinning"
+                  ></b-spinner>
+                  <b-button variant="info" @click="activateChat">Chat</b-button>
+                </div>
+              </b-form-group>
+            </b-col>
+          </b-row>
+        </div>
+        <div class="chat-card" v-else>
+          <h4 class="dark-blue-header ml-2">
+           GPT 3.5 Chat Session:
+          </h4>
+          <hr>
+          <b-row class="chat-row">
+            <b-col :cols="colSize" class="chat-col">
+              <div class="messages">
+                <Message
+                  v-for="message in messages"
+                  :key="message.id"
+                  :class="['message', { right: message.isMine }]"
+                  :dark="message.isMine"
+                  :text="message.text"
+                  :gptLoading="message.gptLoading"
+                  :author="message.author"
+                  :mindMap="message.mindMap"
+                  @scroll="scrollToBottom"
+                  @showMindMap="showModal"
+                />
               </div>
-            </b-form-group>
-          </b-col>
-        </b-row>
-        <b-row class="main-row2" v-else>
-          <b-col :cols="colSize" class="app">
-            <div class="messages">
-              <Message
-                v-for="message in messages"
-                :key="message.id"
-                :class="['message', { right: message.isMine }]"
-                :dark="message.isMine"
-                :text="message.text"
-                :gptLoading="message.gptLoading"
-                :author="message.author"
-                :mindMap="message.mindMap"
-                @scroll="scrollToBottom"
-                @showMindMap="showModal"
+              <br />
+              <ChatBox
+                class="chat-box"
+                @submit="onSubmit"
+                @reset="handleReset"
               />
-            </div>
-            <br />
-            <ChatBox class="chat-box" @submit="onSubmit" @reset="handleReset" />
-          </b-col>
-        </b-row>
+            </b-col>
+          </b-row>
+        </div>
       </b-card>
     </b-container>
 
@@ -183,10 +196,16 @@
       title="Error"
       size="small"
     >
-    <p> There seems to have been a Syntax Error from the GPT.</p>
-    <p> Since we're working with an AI model, it is expected that these errors happen sometimes.</p>
-    <p> Unfortunately a new chat session will have to be created. Please click the button below to do so.</p>
-    <b-button variant="success" @click="newChat"> New Chat </b-button>
+      <p>There seems to have been a Syntax Error from the GPT.</p>
+      <p>
+        Since we're working with an AI model, it is expected that these errors
+        happen sometimes.
+      </p>
+      <p>
+        Unfortunately a new chat session will have to be created. Please click
+        the button below to do so.
+      </p>
+      <b-button variant="success" @click="newChat"> New Chat </b-button>
     </b-modal>
   </div>
 </template>
@@ -295,12 +314,9 @@ export default {
         .catch((err) => {
           this.loading = false
           console.log(err)
-          
-          if (JSON.stringify(err).includes('SyntaxError')) {
-            console.log('Taking care of Syntax Error')
+          console.log('iommg')
 
-            this.showErrorModal()
-          }
+          this.showErrorModal()
         })
     },
     // This method will be called when a new message is sent
@@ -367,7 +383,7 @@ export default {
         gptAnswer = gptAnswer.substring(0, index2 + 1)
 
         // Replace None with "None" FIXME: Check for error here
-        gptAnswer = gptAnswer.replace(' None', '"None"')
+        gptAnswer = gptAnswer.replace(' None', ' "None"')
 
         // Replace first single quotes (not in words) into double quotes
         gptAnswer = gptAnswer.replace(/(?<!\w)'/g, '"')
@@ -541,8 +557,20 @@ export default {
         console.log('There are more than one root node. Printing message...')
 
         this.rootNodeError = true
-        
-        const textv = "There seems to be more than one root node. Can you rebuild the mind map, having only one root node?"
+
+        this.$bvToast.toast(
+          'GPT generated an invalid mind map (multiple root nodes). Sent chat message to fix the problem.',
+          {
+            toastClass: '',
+            title: `Invalid Mind Map generated`,
+            variant: 'warning',
+            autoHideDelay: 50000,
+            solid: true,
+          }
+        )
+
+        const textv =
+          'There seems to be more than one root node. Can you rebuild the mind map, having only one root node?'
 
         this.sendMessage({
           text: textv,
@@ -559,7 +587,6 @@ export default {
       this.showTable = !this.showTable
     },
     async newChat() {
-
       this.hideErrorModal()
       console.log('Reset on chat')
 
@@ -583,8 +610,7 @@ export default {
       })
 
       await this.requestToGpt('Hello!')
-
-    }
+    },
   },
   mounted() {
     /* const treeData = [
@@ -629,9 +655,18 @@ export default {
 
 <style>
 .modal .modal-huge {
-  max-width: 90vw;
-  width: 90vw;
+  max-width: 85vw;
+  width: 85vw;
   overflow: auto;
+}
+
+.org-tree-container {
+  overflow: auto;
+}
+
+.chat-div {
+  border: 2px solid #0f3559;
+  margin-top: 5vh;
 }
 
 body {
@@ -645,31 +680,30 @@ body {
   height: 6vh;
 }
 
+.b-toaster {
+  top: 60% !important;
+  right: 10% !important;
+}
+
 .main-row {
   margin-top: 5vh;
 }
 
-.main-row2 {
-  margin-top: 0vh;
-  margin-bottom: 0vh;
-}
-
 .main-form {
-  height: 55vh;
+  height: 60vh;
   padding: 2%;
   color: rgb(69, 85, 95);
 }
 
 .main-card {
-  margin-top: 15vh;
-  margin-bottom: 15vh;
+  margin-top: 12.5vh;
   padding: 0%;
   width: 90vw;
 }
 
 .main-description {
   padding: 2%;
-  height: 55vh;
+  height: 60vh;
   color: rgb(69, 85, 95);
   font-size: 20px;
   font-weight: bolder;
@@ -687,11 +721,14 @@ body {
 }
 </style>
 <style scoped>
-.app {
+
+.dark-blue-header {
+  color: #0f3559;
+  font-weight: bold;
+}
+.chat-col {
+  padding: 0 2% 0 2%;
   height: 60vh;
-  width: 90vw;
-  padding: 2%;
-  padding-bottom: 0%;
   display: flex;
   flex-direction: column;
 }
