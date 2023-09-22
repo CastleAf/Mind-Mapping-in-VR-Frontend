@@ -83,8 +83,8 @@
       size="huge"
     >
       <div class="text-right my-2">
-        <b-button variant="success" @click="switchTable">
-          {{ showTable ? 'Switch to Graph View' : 'Switch to Table View' }}
+        <b-button variant="success" @click="switchTable"> <font-awesome-icon :icon="['fas', 'repeat']" />
+          {{ showTable ? 'Toggle Graph View' : 'Toggle Table View' }}
         </b-button>
       </div>
       <div>
@@ -119,11 +119,9 @@
             />
           </div>
         </b-card>
-        <div>
-          <br />
-          <hr />
-          <br />
-          <div>
+        <div class="mb-2">
+          <hr/>
+          <div class="mt-1">
             <p class="mx-4 mb-0" style="font-size: large">
               Above you can observe the mind map that was generated based on the
               prompt. Feel free to add more information by communicating with
@@ -135,14 +133,18 @@
             </p>
           </div>
         </div>
+        <br>
         <div class="mt-3 d-flex">
           <div class="ml-0 mr-auto">
             <b-button variant="danger" @click="newChat"
               ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat
             </b-button>
           </div>
-          <div class="ml-auto mr-0">
-            <b-button variant="primary" @click="hideModal">Close</b-button>
+          <div class="ml-auto mr-0" style="justify-content: flex-end;">
+            <b-button variant="success" @click="generateCoordinates"
+              ><font-awesome-icon :icon="['fas', 'diagram-project']" /> Generate Coordinates
+            </b-button>
+            <b-button variant="primary" @click="hideModal"><font-awesome-icon :icon="['fas', 'comments']" /> Keep Chatting</b-button>
           </div>
       </div>
       </div>
@@ -167,13 +169,13 @@
       </p>
       <div class="d-flex">
         <div class="ml-0 mr-auto">
-          <b-button variant="primary" @click="retryChat"
-            ><font-awesome-icon :icon="['fas', 'arrow-rotate-left']" /> Retry
+          <b-button variant="danger" @click="newChat"
+            ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat
           </b-button>
         </div>
         <div class="ml-auto mr-0">
-          <b-button variant="danger" @click="newChat"
-            ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat
+          <b-button variant="primary" @click="retryChat"
+            ><font-awesome-icon :icon="['fas', 'arrow-rotate-left']" /> Retry
           </b-button>
         </div>
       </div>
@@ -194,7 +196,7 @@
       <div class="d-flex">
         <div class="ml-auto mr-0">
           <b-button variant="success" @click="fixMultipleNode"
-            ><font-awesome-icon :icon="['fas', 'square-check']" /> Ok
+            ><font-awesome-icon :icon="['fas', 'square-check']" /> OK
           </b-button>
         </div>
       </div>
@@ -418,6 +420,12 @@ export default {
       }
     },
     generateCoordinates() {
+
+      this.hideModal()
+
+      // Next time user opens mind map modal, it will be in table view
+      this.showTable = true
+
       const textv =
         'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Please fill them in order for the mind map be a force based graph.'
 
@@ -569,6 +577,8 @@ export default {
     },
     async fixMultipleNode() {
 
+      this.hideMultipleErrorNodeModal()
+
       const textv =
         'There seems to be more than one root node. Can you rebuild the mind map, having only one root node?'
 
@@ -583,7 +593,7 @@ export default {
     async retryChat() {
       this.hideErrorModal()
       console.log('Retrying chat')
-      const textv = 'The last response was invalid. Please take your time to compute a correctly formatted response.'
+      const textv = 'The last response was invalid. Please take your time to compute a correctly formatted response (following the JSON format).'
 
       this.sendMessage({
         text: textv,
