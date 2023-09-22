@@ -10,7 +10,7 @@
       <!-- Content here -->
       <b-card class="main-card">
         <div v-if="!chat">
-          <b-row class="main-row">
+          <b-row class="">
             <b-col class="main-description ml-3" fluid>
               <h2>Mind Mapping in VR</h2>
 
@@ -40,60 +40,13 @@
                 feature provides a powerful tool to enhance your understanding
                 and creativity.
               </p>
-            </b-col>
-            <b-col v-if="!mindMapDisplay" class="main-form">
-              <b-form-group>
-                <h5 class="mt-2 ml-1" style="font-weight: bold; color: #45555f">
-                  Please insert the desired file name:
-                </h5>
-                <b-form-input
-                  id="input-1"
-                  v-model="tempFileName"
-                  type="text"
-                  :state="fileName.length > 0"
-                  placeholder="Enter file name"
-                  required
-                ></b-form-input>
-              </b-form-group>
-              <b-form-group class="mt-2">
-                <h5 class="ml-1" style="font-weight: bold; color: #45555f">
-                  Please insert your textual information below:
-                </h5>
-                <b-row class="mt-2">
-                  <b-col>
-                    <b-form-textarea
-                      id="textarea-large"
-                      v-model="prompt"
-                      size="lg"
-                      rows="11"
-                      placeholder="Input text here..."
-                    ></b-form-textarea>
-                    <p v-if="prompt.length > 15000" style="color: #dc3545">
-                      Prompt too long, please keep it lower than 2000 words.
-                      {{ prompt.length }}
-                    </p>
-                  </b-col>
-                </b-row>
-              </b-form-group>
-              <b-form-group>
-                <div class="submit mt-3">
-                  <b-spinner
-                    v-if="loading"
-                    class="mr-2"
-                    variant="primary"
-                    label="Spinning"
-                  ></b-spinner>
-                  <b-button variant="info" @click="activateChat">Chat</b-button>
-                </div>
-              </b-form-group>
+              <b-button variant="info" @click="activateChat">Chat</b-button>
             </b-col>
           </b-row>
         </div>
         <div class="chat-card" v-else>
-          <h4 class="dark-blue-header ml-2">
-           GPT 3.5 Chat Session:
-          </h4>
-          <hr>
+          <h4 class="dark-blue-header ml-2">GPT Chat Session:</h4>
+          <hr />
           <b-row class="chat-row">
             <b-col :cols="colSize" class="chat-col">
               <div class="messages">
@@ -110,7 +63,6 @@
                   @showMindMap="showModal"
                 />
               </div>
-              <br />
               <ChatBox
                 class="chat-box"
                 @submit="onSubmit"
@@ -130,13 +82,8 @@
       title="Generated Mind Map"
       size="huge"
     >
-      <p class="my-4" style="font-size: large">
-        Below you can observe the mind map that was generated based on the
-        prompt. Feel free to add more information by communicating with the GPT
-        model.
-      </p>
-      <div class="text-right my-1">
-        <b-button variant="info" @click="switchTable">
+      <div class="text-right my-2">
+        <b-button variant="success" @click="switchTable">
           {{ showTable ? 'Switch to Graph View' : 'Switch to Table View' }}
         </b-button>
       </div>
@@ -164,7 +111,7 @@
           ></b-pagination>
         </b-card>
         <b-card v-else class="d-block text-center">
-          <div>
+          <div class="org-tree-div">
             <vue2-org-tree
               labelClassName="bg-tomato"
               :collapsable="false"
@@ -177,35 +124,80 @@
           <hr />
           <br />
           <div>
-            <p class="my-4" style="font-size: large">
+            <p class="mx-4 mb-0" style="font-size: large">
+              Above you can observe the mind map that was generated based on the
+              prompt. Feel free to add more information by communicating with
+              the GPT model.
+            </p>
+            <p class="mx-4" style="font-size: large">
               Does everything look okay? If so, you can now generate the
               coordinates for each node and export the mind map to Google Drive.
             </p>
           </div>
         </div>
-        <div class="mt-3 text-right">
-          <b-button variant="primary" @click="hideModal">Close</b-button>
-        </div>
+        <div class="mt-3 d-flex">
+          <div class="ml-0 mr-auto">
+            <b-button variant="danger" @click="newChat"
+              ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat
+            </b-button>
+          </div>
+          <div class="ml-auto mr-0">
+            <b-button variant="primary" @click="hideModal">Close</b-button>
+          </div>
+      </div>
       </div>
     </b-modal>
 
     <b-modal
       ref="error-modal"
+      centered
       hide-footer
       no-close-on-backdrop
       title="Error"
       size="small"
     >
-      <p>There seems to have been a Syntax Error from the GPT.</p>
+      <p>There seems to have been some kind of error from the GPT response.</p>
       <p>
         Since we're working with an AI model, it is expected that these errors
         happen sometimes.
       </p>
       <p>
-        Unfortunately a new chat session will have to be created. Please click
-        the button below to do so.
+        You can either retry to send the last message or start a new chat. In
+        case the error keeps happening, please restart the chat.
       </p>
-      <b-button variant="success" @click="newChat"> New Chat </b-button>
+      <div class="d-flex">
+        <div class="ml-0 mr-auto">
+          <b-button variant="primary" @click="retryChat"
+            ><font-awesome-icon :icon="['fas', 'arrow-rotate-left']" /> Retry
+          </b-button>
+        </div>
+        <div class="ml-auto mr-0">
+          <b-button variant="danger" @click="newChat"
+            ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat
+          </b-button>
+        </div>
+      </div>
+    </b-modal>
+
+    <b-modal
+      ref="error-multiple-node-modal"
+      centered
+      hide-footer
+      no-close-on-backdrop
+      title="Error"
+      size="small"
+    >
+      <p>
+        It seems the GPT model answered an invalid mind map containing more than one root node.
+        A new message asking for the model to rebuild the mind map will be sent.
+      </p>
+      <div class="d-flex">
+        <div class="ml-auto mr-0">
+          <b-button variant="success" @click="fixMultipleNode"
+            ><font-awesome-icon :icon="['fas', 'square-check']" /> Ok
+          </b-button>
+        </div>
+      </div>
     </b-modal>
   </div>
 </template>
@@ -277,13 +269,15 @@ export default {
     async activateChat() {
       this.chat = true
 
-      this.sendMessage({
-        text: 'Hello!',
-        role: 'user',
-        gptLoading: false,
-      })
+      if (!this.messages.length) {
+        this.sendMessage({
+          text: 'Hello!',
+          role: 'user',
+          gptLoading: false,
+        })
 
-      await this.requestToGpt('Hello!')
+        await this.requestToGpt('Hello!')
+      }
     },
     async requestToGpt(message) {
       this.gptHistory.push({ role: 'user', content: message })
@@ -467,6 +461,12 @@ export default {
     hideErrorModal() {
       this.$refs['error-modal'].hide()
     },
+    showMultipleErrorNodeModal() {
+      this.$refs['error-multiple-node-modal'].show()
+    },
+    hideMultipleErrorNodeModal() {
+      this.$refs['error-multiple-node-modal'].hide()
+    },
     generateTree(treeData) {
       // Firstly, sort tree by NodeLevel
       treeData.sort((a, b) => (+a.NodeLevel > +b.NodeLevel ? 1 : -1))
@@ -558,27 +558,8 @@ export default {
 
         this.rootNodeError = true
 
-        this.$bvToast.toast(
-          'GPT generated an invalid mind map (multiple root nodes). Sent chat message to fix the problem.',
-          {
-            toastClass: '',
-            title: `Invalid Mind Map generated`,
-            variant: 'warning',
-            autoHideDelay: 50000,
-            solid: true,
-          }
-        )
-
-        const textv =
-          'There seems to be more than one root node. Can you rebuild the mind map, having only one root node?'
-
-        this.sendMessage({
-          text: textv,
-          role: 'user',
-          gptLoading: false,
-        })
-
-        this.requestToGpt(textv)
+        // Fire error-node-modal
+        this.showMultipleErrorNodeModal()
       }
       this.treeData = roots[0]
       return roots
@@ -586,7 +567,34 @@ export default {
     switchTable() {
       this.showTable = !this.showTable
     },
+    async fixMultipleNode() {
+
+      const textv =
+        'There seems to be more than one root node. Can you rebuild the mind map, having only one root node?'
+
+      this.sendMessage({
+        text: textv,
+        role: 'user',
+        gptLoading: false,
+      })
+
+      await this.requestToGpt(textv)
+    },
+    async retryChat() {
+      this.hideErrorModal()
+      console.log('Retrying chat')
+      const textv = 'The last response was invalid. Please take your time to compute a correctly formatted response.'
+
+      this.sendMessage({
+        text: textv,
+        role: 'user',
+        gptLoading: false,
+      })
+
+      await this.requestToGpt(textv)
+    },
     async newChat() {
+      this.hideModal()
       this.hideErrorModal()
       console.log('Reset on chat')
 
@@ -655,7 +663,7 @@ export default {
 
 <style>
 .modal .modal-huge {
-  max-width: 85vw;
+  max-width: 95vw;
   width: 85vw;
   overflow: auto;
 }
@@ -680,11 +688,6 @@ body {
   height: 6vh;
 }
 
-.b-toaster {
-  top: 60% !important;
-  right: 10% !important;
-}
-
 .main-row {
   margin-top: 5vh;
 }
@@ -703,7 +706,7 @@ body {
 
 .main-description {
   padding: 2%;
-  height: 60vh;
+  height: 65vh;
   color: rgb(69, 85, 95);
   font-size: 20px;
   font-weight: bolder;
@@ -715,13 +718,17 @@ body {
   justify-content: flex-end;
 }
 .bg-tomato {
-  background-color: #0f3559 !important;
+  background-color: #599cda;
   color: white;
   font-weight: bold;
+  border-color: #599cda;
+}
+.org-tree-div {
+  overflow: auto;
+  max-height: 40vh;
 }
 </style>
 <style scoped>
-
 .dark-blue-header {
   color: #0f3559;
   font-weight: bold;

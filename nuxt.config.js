@@ -25,11 +25,12 @@ export default {
   css: [
     '~/assets/scss/app.scss',
     '~/assets/fonts/lato.css',
-    '~/assets/vue-org-tree.css'
+    '~/assets/vue-org-tree.css',
+    '@fortawesome/fontawesome-svg-core/styles.css'
   ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
-  plugins: ['@/plugins/vue-org-tree.js'],
+  plugins: ['@/plugins/vue-org-tree.js', '@/plugins/fontawesome.js'],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
