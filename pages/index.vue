@@ -2,7 +2,7 @@
   <div class>
     <b-navbar class="app-navbar" toggleable="lg" type="dark" variant="white">
       <b-navbar-brand style="font-weight: bold; color: #45555f">
-        <NuxtLogo />
+        <NuxtLogo style="margin: auto;"/>
         &nbsp; Mind Mapping In VR
       </b-navbar-brand>
     </b-navbar>
@@ -50,9 +50,8 @@
                 drive.
               </p>
               <div class="chat-button">
-                To start chatting press the button: 
+                <span v-if="windowWidth > 1199">To start chatting press the button:</span> 
                 <b-button variant="info" @click="activateChat">Start Chat</b-button>
-                {{ windowHeight }}
               </div>
             </b-col>
             <b-col cols="12" xl="6">
@@ -69,8 +68,8 @@
         </div>
         <div class="chat-card" v-else>
           <div style="display: flex; margin-bottom: -10px;"> 
-            <h4 class="dark-blue-header ml-2" style="max-width: 67%;">GPT Chat Session:</h4>
-            <b-button @click="newChat" variant="secundary" style="padding: 0px 4px; margin-left: auto; margin-right: 0; border: 1px solid rgba(0, 0, 0, 0.25)"><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat</b-button>
+            <h4 class="dark-blue-header ml-2" style="max-width: 67%; margin: auto;">GPT Chat Session:</h4>
+            <b-button @click="newChat" variant="secondary" style="color: rgb(77, 77, 77);padding: 0px auto; margin-left: auto; margin-right: 0;"><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat</b-button>
         </div>
           <hr />
           <b-row class="chat-row">
@@ -249,7 +248,7 @@ export default {
   data() {
     return {
       prompt: '',
-      windowHeight: '',
+      windowWidth: '',
       showTable: false,
       treeData: {
         label: 'root',
@@ -664,7 +663,7 @@ export default {
   },
   mounted() {
 
-    this.windowHeight = window.innerHeight
+    this.windowWidth = window.innerWidth
 
 
 
@@ -805,6 +804,7 @@ body {
 @media (max-width: 1199px) {
   .mind-map-img {
     max-width: 85vw;
+    max-height: 70vh;
     height: fit-content;
     width: fit-content;
   }
