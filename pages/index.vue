@@ -10,42 +10,68 @@
       <!-- Content here -->
       <b-card class="main-card">
         <div v-if="!chat">
-          <b-row class="">
-            <b-col class="main-description ml-3" fluid>
-              <h2>Mind Mapping in VR</h2>
-
+          <b-row style="">
+            <b-col cols="12" xl="6" class="main-description" fluid style="overflow: auto; max-height: fit-content;">
+              <h2 style="font-weight: bold">Mind Mapping in VR</h2>
+              <br />
               <p>
-                Convert Text to Mind Maps: Our web app harnesses the power of
-                OpenAI to transform textual information into visual mind maps.
-                Simply enter your text, and our app will generate a
-                comprehensive mind map that organizes and visualizes the key
-                concepts and relationships within your content.
+                This Webapp, developed by
+                <a href="mailto:afonso.castelao@tecnico.ulisboa.pt"
+                  >Afonso Muller e Sousa Castelão</a
+                >
+                represents the project to be delivered as his master's thesis
+                on Computer Science and Engineering.
               </p>
               <p>
-                How does it work? Our app utilizes the OpenAI API, a
-                cutting-edge language model, to process your text and generate a
-                structured mind map. It analyzes the content, identifies
-                important keywords and concepts, and arranges them
-                hierarchically to create a clear and visually appealing mind
-                map.
+                The app utilizes the
+                <a
+                  href="https://platform.openai.com/docs/guides/gpt"
+                  target="_blank"
+                  >OpenAI's GPT</a
+                >, a cutting-edge AI language model, to process text and
+                generate a structured mind map. It analyzes the content,
+                identifies important keywords and concepts, and arranges them
+                hierarchically to create a clear mind map.
               </p>
               <p>
-                To get started, just type or paste your text into our app, and
-                with a click of a button, watch as your information is
-                transformed into a table describing a Mind Map.
+                Through the exchange of messages (prompts) with the GPT model, a
+                Mind Map will be built. The user is able to keep chatting with the model
+                in an informal way in order to achieve the desired result.
               </p>
               <p>
-                Whether you're looking to organize your thoughts, brainstorm
-                ideas, or simplify complex information, our text-to-mind-map
-                feature provides a powerful tool to enhance your understanding
-                and creativity.
+                The final mind map visualization and interaction is to be made
+                in a Virtual Reality environment - through an external app
+                called <a
+                  href="https://noda.io/"
+                  target="_blank"
+                  >Noda.io</a
+                >. When in that environment, the user is able to
+                access this app’s generated Mind Map by importing it from google
+                drive.
               </p>
-              <b-button variant="info" @click="activateChat">Chat</b-button>
+              <div class="chat-button">
+                To start chatting press the button: 
+                <b-button variant="info" @click="activateChat">Start Chat</b-button>
+                {{ windowHeight }}
+              </div>
+            </b-col>
+            <b-col cols="12" xl="6">
+              <div class="img-div">
+                <b-img
+                  class="mind-map-img"
+                  src="https://media.istockphoto.com/id/1497860763/pt/vetorial/molecular-structure-icon.jpg?s=2048x2048&w=is&k=20&c=BbKEc9x9TMHYxWw5NOPk9igJg6Dpb2NzfU0Y9swB4i8="
+                  fluid
+                  alt="Responsive image"
+                />
+              </div>
             </b-col>
           </b-row>
         </div>
         <div class="chat-card" v-else>
-          <h4 class="dark-blue-header ml-2">GPT Chat Session:</h4>
+          <div style="display: flex; margin-bottom: -10px;"> 
+            <h4 class="dark-blue-header ml-2" style="max-width: 67%;">GPT Chat Session:</h4>
+            <b-button @click="newChat" variant="secundary" style="padding: 0px 4px; margin-left: auto; margin-right: 0; border: 1px solid rgba(0, 0, 0, 0.25)"><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat</b-button>
+        </div>
           <hr />
           <b-row class="chat-row">
             <b-col :cols="colSize" class="chat-col">
@@ -83,7 +109,8 @@
       size="huge"
     >
       <div class="text-right my-2">
-        <b-button variant="success" @click="switchTable"> <font-awesome-icon :icon="['fas', 'repeat']" />
+        <b-button variant="success" @click="switchTable">
+          <font-awesome-icon :icon="['fas', 'repeat']" />
           {{ showTable ? 'Toggle Graph View' : 'Toggle Table View' }}
         </b-button>
       </div>
@@ -120,7 +147,7 @@
           </div>
         </b-card>
         <div class="mb-2">
-          <hr/>
+          <hr />
           <div class="mt-1">
             <p class="mx-4 mb-0" style="font-size: large">
               Above you can observe the mind map that was generated based on the
@@ -133,20 +160,24 @@
             </p>
           </div>
         </div>
-        <br>
+        <br />
         <div class="mt-3 d-flex">
           <div class="ml-0 mr-auto">
             <b-button variant="danger" @click="newChat"
               ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat
             </b-button>
           </div>
-          <div class="ml-auto mr-0" style="justify-content: flex-end;">
+          <div class="ml-auto mr-0" style="justify-content: flex-end">
             <b-button variant="success" @click="generateCoordinates"
-              ><font-awesome-icon :icon="['fas', 'diagram-project']" /> Generate Coordinates
+              ><font-awesome-icon :icon="['fas', 'diagram-project']" /> Generate
+              Coordinates
             </b-button>
-            <b-button variant="primary" @click="hideModal"><font-awesome-icon :icon="['fas', 'comments']" /> Keep Chatting</b-button>
+            <b-button variant="primary" @click="hideModal"
+              ><font-awesome-icon :icon="['fas', 'comments']" /> Keep
+              Chatting</b-button
+            >
           </div>
-      </div>
+        </div>
       </div>
     </b-modal>
 
@@ -190,8 +221,9 @@
       size="small"
     >
       <p>
-        It seems the GPT model answered an invalid mind map containing more than one root node.
-        A new message asking for the model to rebuild the mind map will be sent.
+        It seems the GPT model answered an invalid mind map containing more than
+        one root node. A new message asking for the model to rebuild the mind
+        map will be sent.
       </p>
       <div class="d-flex">
         <div class="ml-auto mr-0">
@@ -217,6 +249,7 @@ export default {
   data() {
     return {
       prompt: '',
+      windowHeight: '',
       showTable: false,
       treeData: {
         label: 'root',
@@ -420,7 +453,6 @@ export default {
       }
     },
     generateCoordinates() {
-
       this.hideModal()
 
       // Next time user opens mind map modal, it will be in table view
@@ -576,7 +608,6 @@ export default {
       this.showTable = !this.showTable
     },
     async fixMultipleNode() {
-
       this.hideMultipleErrorNodeModal()
 
       const textv =
@@ -593,7 +624,8 @@ export default {
     async retryChat() {
       this.hideErrorModal()
       console.log('Retrying chat')
-      const textv = 'The last response was invalid. Please take your time to compute a correctly formatted response (following the JSON format).'
+      const textv =
+        'The last response was invalid. Please take your time to compute a correctly formatted response (following the JSON format).'
 
       this.sendMessage({
         text: textv,
@@ -631,6 +663,11 @@ export default {
     },
   },
   mounted() {
+
+    this.windowHeight = window.innerHeight
+
+
+
     /* const treeData = [
       { NodeId: '1', NodeName: 'Embryology', FromNode: '', NodeLevel: '1' },
       { NodeId: '2', NodeName: 'Ontogeny', FromNode: '1', NodeLevel: '2' },
@@ -672,6 +709,8 @@ export default {
 </script>
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,300&display=swap');
+
 .modal .modal-huge {
   max-width: 95vw;
   width: 85vw;
@@ -688,6 +727,7 @@ export default {
 }
 
 body {
+  font-family: 'Nunito Sans', sans-serif;
   background-image: url('@/assets/img/background.jpg');
   background-repeat: no-repeat;
   background-attachment: fixed;
@@ -695,7 +735,7 @@ body {
 }
 
 .app-navbar {
-  height: 6vh;
+  height: fit-content;
 }
 
 .main-row {
@@ -715,7 +755,7 @@ body {
 }
 
 .main-description {
-  padding: 2%;
+  padding: 1% 2%;
   height: 65vh;
   color: rgb(69, 85, 95);
   font-size: 20px;
@@ -737,6 +777,62 @@ body {
   overflow: auto;
   max-height: 40vh;
 }
+.img-div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+.mind-map-img {
+  margin-top: auto;
+  margin-bottom: auto;
+  max-width: 80%;
+  max-height: 100%;
+}
+
+@media (min-width: 1296px) and (max-width: 1500px) {
+  .main-description {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1295px) {
+  .main-description {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 1199px) {
+  .mind-map-img {
+    max-width: 85vw;
+    height: fit-content;
+    width: fit-content;
+  }
+  .main-description {
+    height: fit-content;
+    padding: 1% 4%;
+  }
+  .main-card {
+    margin-top: 5vh;
+    margin-bottom: 5vh;
+    padding: 0%;
+    width: 90vw;
+    height: fit-content;
+  }
+  .app-navbar {
+    height: fit-content;
+  }
+  h2 {
+    text-align: center;
+  }
+  .app-container {
+    height: 90vh;
+  }
+  .chat-button {
+    text-align: center;
+  }
+}
+
 </style>
 <style scoped>
 .dark-blue-header {
