@@ -4,26 +4,27 @@
       <b-navbar-brand style="font-weight: bold; color: #45555f">
         <NuxtLogo style="margin: auto;"/>
         &nbsp; Mind Mapping In VR
+        {{ windowWidth }}
       </b-navbar-brand>
     </b-navbar>
     <b-container class="app-container col d-flex justify-content-center" fluid>
       <!-- Content here -->
       <b-card class="main-card">
         <div v-if="!chat">
-          <b-row style="">
+          <b-row class="main-card-row" style="">
             <b-col cols="12" xl="6" class="main-description" fluid style="overflow: auto; max-height: fit-content;">
               <h2 style="font-weight: bold">Mind Mapping in VR</h2>
               <br />
               <p>
-                This Webapp, developed by
+                This Web App, developed by
                 <a href="mailto:afonso.castelao@tecnico.ulisboa.pt"
                   >Afonso Muller e Sousa Castelão</a
                 >
                 represents the project to be delivered as his master's thesis
-                on Computer Science and Engineering.
+                on a Computer Science and Engineering degree in Instituto Superior Técnico, Lisbon.
               </p>
               <p>
-                The app utilizes the
+                The app utilizes 
                 <a
                   href="https://platform.openai.com/docs/guides/gpt"
                   target="_blank"
@@ -46,12 +47,12 @@
                   target="_blank"
                   >Noda.io</a
                 >. When in that environment, the user is able to
-                access this app’s generated Mind Map by importing it from google
-                drive.
+                access this app’s generated Mind Map by importing it from Google
+                Drive.
               </p>
               <div class="chat-button">
                 <span v-if="windowWidth > 1199">To start chatting press the button:</span> 
-                <b-button variant="info" @click="activateChat">Start Chat</b-button>
+                <b-button variant="success" @click="activateChat">Start Chat</b-button>
               </div>
             </b-col>
             <b-col cols="12" xl="6">
@@ -107,8 +108,8 @@
       title="Generated Mind Map"
       size="huge"
     >
-      <div class="text-right my-2">
-        <b-button variant="success" @click="switchTable">
+      <div class="text-right mb-2">
+        <b-button variant="secondary" @click="switchTable">
           <font-awesome-icon :icon="['fas', 'repeat']" />
           {{ showTable ? 'Toggle Graph View' : 'Toggle Table View' }}
         </b-button>
@@ -167,7 +168,7 @@
             </b-button>
           </div>
           <div class="ml-auto mr-0" style="justify-content: flex-end">
-            <b-button variant="success" @click="generateCoordinates"
+            <b-button v-if="!coordinatesGenerated" variant="success" @click="generateCoordinates"
               ><font-awesome-icon :icon="['fas', 'diagram-project']" /> Generate
               Coordinates
             </b-button>
@@ -175,6 +176,9 @@
               ><font-awesome-icon :icon="['fas', 'comments']" /> Keep
               Chatting</b-button
             >
+            <b-button v-if="coordinatesGenerated" variant="success" @click="generateCoordinates"
+              ><font-awesome-icon :icon="['fas', 'upload']" /> Send to Google Drive
+            </b-button>
           </div>
         </div>
       </div>
@@ -249,6 +253,7 @@ export default {
     return {
       prompt: '',
       windowWidth: '',
+      coordinatesGenerated: false,
       showTable: false,
       treeData: {
         label: 'root',
@@ -273,7 +278,7 @@ export default {
       fileName: '',
       totalRows: 1,
       currentPage: 1,
-      perPage: 10,
+      perPage: 8,
       chat: false,
       data: [],
       id: 2,
@@ -456,6 +461,8 @@ export default {
 
       // Next time user opens mind map modal, it will be in table view
       this.showTable = true
+      this.coordinatesGenerated = true
+      console.log(this.coordinatesGenerated)
 
       const textv =
         'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Please fill them in order for the mind map be a force based graph.'
@@ -493,6 +500,11 @@ export default {
     },
     hideModal() {
       this.$refs['mind-map-modal'].hide()
+
+      // Default view should be graph view (except when user generates coordinates)
+      if (this.showTable) {
+        this.showTable = false
+      }
     },
     showErrorModal() {
       this.$refs['error-modal'].show()
@@ -608,6 +620,10 @@ export default {
     },
     async fixMultipleNode() {
       this.hideMultipleErrorNodeModal()
+
+      this.messages.forEach((element) => {
+        element.mindMap = false
+      })
 
       const textv =
         'There seems to be more than one root node. Can you rebuild the mind map, having only one root node?'
@@ -748,7 +764,7 @@ body {
 }
 
 .main-card {
-  margin-top: 12.5vh;
+  margin-top: 10vh;
   padding: 0%;
   width: 90vw;
 }
@@ -785,19 +801,28 @@ body {
 .mind-map-img {
   margin-top: auto;
   margin-bottom: auto;
-  max-width: 80%;
+  max-width: 500px;
   max-height: 100%;
+}
+
+@media (min-width: 1501px) and (max-width: 1750px) {
+  .main-description {
+    font-size: 17px;
+  }
 }
 
 @media (min-width: 1296px) and (max-width: 1500px) {
   .main-description {
-    font-size: 18px;
+    font-size: 17px;
   }
 }
 
 @media (min-width: 1200px) and (max-width: 1295px) {
   .main-description {
     font-size: 17px;
+  }
+  .mind-map-img {
+    max-width: 400px;
   }
 }
 
