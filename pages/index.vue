@@ -1,18 +1,26 @@
 <template>
   <div class>
     <b-navbar class="app-navbar" toggleable="lg" type="dark" variant="white">
-      <b-navbar-brand style="font-weight: bold; color: #45555f">
-        <NuxtLogo style="margin: auto;"/>
-        &nbsp; Mind Mapping In VR
-        {{ windowWidth }}
+      <b-navbar-brand class="navbar-brand" style="font-weight: bold; color: #45555f">
+        <NuxtLogo style="margin: auto; cursor: pointer;" />
+        <span class="nav-title">&nbsp; Mind Mapping In VR
+        {{ windowWidth }}</span>
+        <!-- FIXME: Remove this later on -->
       </b-navbar-brand>
     </b-navbar>
     <b-container class="app-container col d-flex justify-content-center" fluid>
       <!-- Content here -->
       <b-card class="main-card">
+        <!-- Landing Card -->
         <div v-if="!chat">
           <b-row class="main-card-row" style="">
-            <b-col cols="12" xl="6" class="main-description" fluid style="overflow: auto; max-height: fit-content;">
+            <b-col
+              cols="12"
+              xl="6"
+              class="main-description"
+              fluid
+              style="overflow: auto; max-height: fit-content"
+            >
               <h2 style="font-weight: bold">Mind Mapping in VR</h2>
               <br />
               <p>
@@ -20,11 +28,12 @@
                 <a href="mailto:afonso.castelao@tecnico.ulisboa.pt"
                   >Afonso Muller e Sousa Castelão</a
                 >
-                represents the project to be delivered as his master's thesis
-                on a Computer Science and Engineering degree in Instituto Superior Técnico, Lisbon.
+                represents the project to be delivered as his master's thesis on
+                a Computer Science and Engineering degree in Instituto Superior
+                Técnico, Lisbon.
               </p>
               <p>
-                The app utilizes 
+                The app utilizes
                 <a
                   href="https://platform.openai.com/docs/guides/gpt"
                   target="_blank"
@@ -36,23 +45,24 @@
               </p>
               <p>
                 Through the exchange of messages (prompts) with the GPT model, a
-                Mind Map will be built. The user is able to keep chatting with the model
-                in an informal way in order to achieve the desired result.
+                Mind Map will be built. The user is able to keep chatting with
+                the model in an informal way in order to achieve the desired
+                result.
               </p>
               <p>
                 The final mind map visualization and interaction is to be made
                 in a Virtual Reality environment - through an external app
-                called <a
-                  href="https://noda.io/"
-                  target="_blank"
-                  >Noda.io</a
-                >. When in that environment, the user is able to
-                access this app’s generated Mind Map by importing it from Google
-                Drive.
+                called <a href="https://noda.io/" target="_blank">Noda.io</a>.
+                When in that environment, the user is able to access this app’s
+                generated Mind Map by importing it from Google Drive.
               </p>
               <div class="chat-button">
-                <span v-if="windowWidth > 1199">To start chatting press the button:</span> 
-                <b-button variant="success" @click="activateChat">Start Chat</b-button>
+                <span v-if="windowWidth > 1199"
+                  >To start chatting press the button:</span
+                >
+                <b-button variant="success" @click="activateChat"
+                  >Start Chat</b-button
+                >
               </div>
             </b-col>
             <b-col cols="12" xl="6">
@@ -61,20 +71,38 @@
                   class="mind-map-img"
                   src="https://media.istockphoto.com/id/1497860763/pt/vetorial/molecular-structure-icon.jpg?s=2048x2048&w=is&k=20&c=BbKEc9x9TMHYxWw5NOPk9igJg6Dpb2NzfU0Y9swB4i8="
                   fluid
-                  alt="Responsive image"
+                  alt="Mind Map ilustration image"
                 />
               </div>
             </b-col>
           </b-row>
         </div>
+
+        <!-- GPT Chat Card -->
         <div class="chat-card" v-else>
-          <div style="display: flex; margin-bottom: -10px;"> 
-            <h4 class="dark-blue-header ml-2" style="max-width: 67%; margin: auto;">GPT Chat Session:</h4>
-            <b-button @click="newChat" variant="secondary" style="color: rgb(77, 77, 77);padding: 0px auto; margin-left: auto; margin-right: 0;"><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat</b-button>
-        </div>
+          <div style="display: flex; margin-bottom: -10px">
+            <h4
+              class="dark-blue-header ml-2"
+              style="max-width: 67%; margin: auto"
+            >
+              GPT Chat Session:
+            </h4>
+            <b-button
+              @click="newChat"
+              variant="secondary"
+              style="
+                color: rgb(77, 77, 77);
+                padding: 0px auto;
+                margin-left: auto;
+                margin-right: 0;
+              "
+              ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New
+              Chat</b-button
+            >
+          </div>
           <hr />
-          <b-row class="chat-row">
-            <b-col :cols="colSize" class="chat-col">
+          <b-row>
+            <b-col cols="12" class="chat-col">
               <div class="messages">
                 <Message
                   v-for="message in messages"
@@ -100,7 +128,7 @@
       </b-card>
     </b-container>
 
-    <!-- B modal - Main Modal -->
+    <!-- B-modal: Main Results Modal -->
     <b-modal
       ref="mind-map-modal"
       hide-footer
@@ -140,7 +168,7 @@
         <b-card v-else class="d-block text-center">
           <div class="org-tree-div">
             <vue2-org-tree
-              labelClassName="bg-tomato"
+              labelClassName="org-tree-nodes"
               :collapsable="false"
               :data="treeData"
             />
@@ -148,19 +176,28 @@
         </b-card>
         <div class="mb-2">
           <hr />
-          <div class="mt-1">
+          <div class="mt-2">
             <p class="mx-4 mb-0" style="font-size: large">
               Above you can observe the mind map that was generated based on the
-              prompt. Feel free to add more information by communicating with
-              the GPT model.
+              prompt.
             </p>
-            <p class="mx-4" style="font-size: large">
-              Does everything look okay? If so, you can now generate the
-              coordinates for each node and export the mind map to Google Drive.
+            <p
+              v-if="!coordinatesGenerated"
+              class="mx-4"
+              style="font-size: large"
+            >
+              You can either modify and add information to the graph by chatting
+              with the GPT model or opt to generate 3D coordinates for each
+              node:
+            </p>
+            <p v-else class="mx-4" style="font-size: large">
+              You can keep modifying or adding information to the graph by
+              chatting with the GPT model. Once you are satisfied with the
+              result, you can send the mind map to Google Drive by clicking the
+              button below.
             </p>
           </div>
         </div>
-        <br />
         <div class="mt-3 d-flex">
           <div class="ml-0 mr-auto">
             <b-button variant="danger" @click="newChat"
@@ -168,7 +205,10 @@
             </b-button>
           </div>
           <div class="ml-auto mr-0" style="justify-content: flex-end">
-            <b-button v-if="!coordinatesGenerated" variant="success" @click="generateCoordinates"
+            <b-button
+              v-if="!coordinatesGenerated"
+              variant="success"
+              @click="generateCoordinates"
               ><font-awesome-icon :icon="['fas', 'diagram-project']" /> Generate
               Coordinates
             </b-button>
@@ -176,20 +216,25 @@
               ><font-awesome-icon :icon="['fas', 'comments']" /> Keep
               Chatting</b-button
             >
-            <b-button v-if="coordinatesGenerated" variant="success" @click="generateCoordinates"
-              ><font-awesome-icon :icon="['fas', 'upload']" /> Send to Google Drive
+            <b-button
+              v-if="coordinatesGenerated"
+              variant="success"
+              @click="generateCoordinates"
+              ><font-awesome-icon :icon="['fas', 'upload']" /> Send to Google
+              Drive
             </b-button>
           </div>
         </div>
       </div>
     </b-modal>
 
+    <!-- B-modal: GTP Response Error -->
     <b-modal
       ref="error-modal"
       centered
       hide-footer
       no-close-on-backdrop
-      title="Error"
+      title="GPT Response Error"
       size="small"
     >
       <p>There seems to have been some kind of error from the GPT response.</p>
@@ -215,12 +260,15 @@
       </div>
     </b-modal>
 
+    <!-- B-modal: Multiple Node Error -->
     <b-modal
       ref="error-multiple-node-modal"
+      header-bg-variant="success"
+      header-text-variant="light"
       centered
       hide-footer
       no-close-on-backdrop
-      title="Error"
+      title="Multiple Node Error"
       size="small"
     >
       <p>
@@ -251,7 +299,6 @@ export default {
   },
   data() {
     return {
-      prompt: '',
       windowWidth: '',
       coordinatesGenerated: false,
       showTable: false,
@@ -268,19 +315,12 @@ export default {
         ],
       },
       loading: false,
-      mindMapDisplay: false,
-      res: '',
       rootNodeError: false,
-      items: [],
-      colSize: 12,
-      tempFileName: '',
       mindMapButton: false,
-      fileName: '',
       totalRows: 1,
       currentPage: 1,
       perPage: 8,
       chat: false,
-      data: [],
       id: 2,
       messages: [],
       gptHistory: [
@@ -299,12 +339,6 @@ export default {
     },
   },
   methods: {
-    reset() {
-      this.loading = false
-      this.mindMapDisplay = false
-      this.colSize = 12
-      this.items = []
-    },
     async activateChat() {
       this.chat = true
 
@@ -347,7 +381,6 @@ export default {
         .catch((err) => {
           this.loading = false
           console.log(err)
-          console.log('iommg')
 
           this.showErrorModal()
         })
@@ -430,8 +463,6 @@ export default {
         this.mindMap = JSON.parse(gptAnswer)
         this.totalRows = this.mindMap.length
 
-        this.mindMapDisplay = true
-
         if (mockMessage) {
           this.messages[this.messages.length - 1].text =
             'The generated mind map content has been generated based on the information you provided.'
@@ -462,7 +493,6 @@ export default {
       // Next time user opens mind map modal, it will be in table view
       this.showTable = true
       this.coordinatesGenerated = true
-      console.log(this.coordinatesGenerated)
 
       const textv =
         'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Please fill them in order for the mind map be a force based graph.'
@@ -496,6 +526,9 @@ export default {
       }
     },
     showModal() {
+
+      // Default Table page should be 1
+      this.currentPage = 1
       this.$refs['mind-map-modal'].show()
     },
     hideModal() {
@@ -554,23 +587,6 @@ export default {
       console.log(newData)
 
       this.list_to_tree(newData)
-      /* 
-      // Finally, create tree
-      for (let level = 0; level < objsPerLevel.length; level++) {
-        for (let i = 0; i < objsPerLevel[level].length; i++) {
-          if (level === '0') {
-            finalObj.label = objsPerLevel[level][i].NodeName
-            finalObj.id = objsPerLevel[level][i].NodeId
-          } else {
-            finalObj[level - 1].children.push({
-              label: objsPerLevel[level][i].NodeName,
-              id: objsPerLevel[level][i].NodeId,
-              expand: true,
-              children: [],
-            })
-          }
-        }
-      } */
     },
     list_to_tree(list) {
       // console.log(list)
@@ -655,6 +671,8 @@ export default {
       this.hideErrorModal()
       console.log('Reset on chat')
 
+      this.coordinatesGenerated = false
+
       // This method is called on the syntax error modal
       // Reset and start a new chat.
       this.messages = []
@@ -678,47 +696,7 @@ export default {
     },
   },
   mounted() {
-
     this.windowWidth = window.innerWidth
-
-
-
-    /* const treeData = [
-      { NodeId: '1', NodeName: 'Embryology', FromNode: '', NodeLevel: '1' },
-      { NodeId: '2', NodeName: 'Ontogeny', FromNode: '1', NodeLevel: '2' },
-      { NodeId: '3', NodeName: 'Phylogeny', FromNode: '1', NodeLevel: '2' },
-      {
-        NodeId: '4',
-        NodeName: 'Vertebrate Animals',
-        FromNode: '2',
-        NodeLevel: '3',
-      },
-      { NodeId: '5', NodeName: 'Fertilization', FromNode: '4', NodeLevel: '4' },
-      { NodeId: '6', NodeName: 'Segmentation', FromNode: '5', NodeLevel: '5' },
-      {
-        NodeId: '7',
-        NodeName: 'Differentiation of Cells',
-        FromNode: '5',
-        NodeLevel: '5',
-      },
-    ] */
-    // this.generateTree(treeData)
-    // console.log('here we go')
-    // const temp = "[{NodeId: 1, NodeName: Ovaries, FromNode: 0, NodeLevel: 1}, {NodeId: 2, NodeName: Development of Ova, FromNode: 0, NodeLevel: 1}, {NodeId: 3, NodeName: Size and Location of Ova, FromNode: 0, NodeLevel: 1}, {NodeId: 4, NodeName: Structure of Ovum, FromNode: 2, NodeLevel: 2}, {NodeId: 5, NodeName: Coverings of the Ovum, FromNode: 2, NodeLevel: 2}, {NodeId: 6, NodeName: Discharge of Ova, FromNode: 2, NodeLevel: 2}, {NodeId: 7, NodeName: Maturation of the Ovum, FromNode: 2, NodeLevel: 2}, {NodeId: 8, NodeName: Germinal Vesicle, FromNode: 4, NodeLevel: 3}, {NodeId: 9, NodeName: Yolk, FromNode: 4, NodeLevel: 3}]"
-    // const abc = temp.replace(/: /g, ': "')
-    // const abcTempObj = abc.replace(/,/g, '",')
-    // const abcTempObj2 = abcTempObj.replace(/}"/g, '}')
-    // const abcObj = abcTempObj2.replace(/}/g, '"}')
-    // const abcObj2 = abcObj.replace(/{/g, '{"')
-    // const abcObj3 = abcObj2.replace(/:/g, '":')
-    // const abcObj4 = abcObj3.replace(/", /g, '", "')
-    // console.log(abcObj4)
-    // const other = "[{'NodeId': '1', 'NodeName': 'Pleasure and Pain', 'FromNode': '', 'NodeLevel': '0'}, {'NodeId': '2', 'NodeName': 'Introduction and explanation of the mistaken idea that didn't make it', 'FromNode': '1', 'NodeLevel': '1'}, {'NodeId': '3', 'NodeName': 'Account of the system and teachings', 'FromNode': '1', 'NodeLevel': '1'}]"
-    // const temp = other.replace(/(?<!\w)'/g, '"')
-    // const final = temp.replace(/'(?!\w)/g, '"')
-    // console.log(final)
-    // console.log(JSON.parse(final))
-    // console.log(JSON.parse(abcObj4))
   },
 }
 </script>
@@ -753,6 +731,16 @@ body {
   height: fit-content;
 }
 
+.nav-title {
+  font-size: 1rem;
+  text-align: right;
+}
+
+.navbar-brand {
+  display: flex;
+  width: 100vw;
+}
+
 .main-row {
   margin-top: 5vh;
 }
@@ -782,7 +770,7 @@ body {
   display: flex;
   justify-content: flex-end;
 }
-.bg-tomato {
+.org-tree-nodes {
   background-color: #599cda;
   color: white;
   font-weight: bold;
@@ -790,7 +778,7 @@ body {
 }
 .org-tree-div {
   overflow: auto;
-  max-height: 40vh;
+  max-height: 45vh;
 }
 .img-div {
   display: flex;
@@ -857,7 +845,6 @@ body {
     text-align: center;
   }
 }
-
 </style>
 <style scoped>
 .dark-blue-header {

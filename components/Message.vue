@@ -1,6 +1,6 @@
 <template>
   <div :class='["message", { dark }]'>
-    <h4 class="font-weight-bold text-capitalize">{{ author }} <img class="author-icon" :src="getIcon" alt="*"></h4>
+    <h5 class="font-weight-bold text-capitalize">{{ author }} <img class="author-icon" :src="getIcon" alt="*"></h5>
     <span class="message-text">{{ text }}</span> <span v-if="gptLoading"><b-spinner small label="Small Spinner" type="grow"
         variant="primary"></b-spinner>&nbsp;<b-spinner small label="Small Spinner" type="grow"
         variant="primary"></b-spinner>&nbsp;<b-spinner small label="Small Spinner" type="grow"
@@ -42,6 +42,7 @@ export default {
 <style scoped>
 .message {
   font-family: 'Inconsolata', sans-serif;
+  font-size: 1rem;
   background: #e7e7e7;
   color: #0f3559;
   border-radius: 10px;
@@ -50,28 +51,24 @@ export default {
   max-width: 90%;
 }
 
-.message-text {
-  font-size: 1.3rem;
-}
-
 .message.dark {
   background: #0f3559;
   color: white;
 }
 
 h5 {
-  margin: 0 0 .5rem 0;
+  margin: 0 0 .4rem 0;
 }
 
 .author-icon {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.25rem;
+  height: 1.25rem;
   margin-left: .5rem;
-  vertical-align: text-top;
+  vertical-align: text-bottom;
 }
 
 .message-text {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   line-height: 1.5rem;
 }
 </style>
