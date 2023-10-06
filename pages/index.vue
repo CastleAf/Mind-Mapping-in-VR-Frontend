@@ -218,7 +218,7 @@
             <b-button
               v-if="coordinatesGenerated"
               variant="success"
-              @click="generateCoordinates"
+              @click="$bvModal.show('send-to-g-drive-modal')"
               ><font-awesome-icon :icon="['fas', 'upload']" /> Send to Google
               Drive
             </b-button>
@@ -286,6 +286,50 @@
       </div>
     </b-modal>
 
+    <!-- B-modal: Send Mind Map to Google Drive -->
+    <b-modal
+      id="send-to-g-drive-modal"
+      centered
+      hide-footer
+      no-close-on-backdrop
+      title="Export to Google Drive"
+      size="small"
+    >
+      <p>Before sending the mind map, please verify that the resulted graph is formatted correctly.</p>
+      <p>
+        If that is the case, please give a name to the generated file and click the button below to send the mind map to Google Drive.
+      </p>
+      <b-form-group
+        class="mt-2"
+        id="mind-map-name"
+        label="Mind Map Name:"
+        label-for="name"
+        description="Ensure that the mind map has no spaces or special characters."
+      >
+        <b-form-input
+          id="name"
+          v-model="mindMapName"
+          type="text"
+          placeholder="Enter mind map name"
+          required
+        ></b-form-input>
+      </b-form-group>
+      <br>
+      <div class="d-flex">
+        <div class="ml-0 mr-auto">
+          <b-button :disabled="loading" @click="$bvModal.hide('send-to-g-drive-modal')" variant="primary"
+            ><font-awesome-icon :icon="['fas', 'paper-plane']" style="color: #fff;" /> Return
+          </b-button>
+        </div>
+        <div class="ml-auto mr-0">
+          <b-spinner v-if="loading" small label="Small Spinner" variant="primary"></b-spinner>
+          <b-button :disabled="loading || !this.mindMapName.length" variant="success" @click="doGDriveRequest"
+            >Export to Google Drive <font-awesome-icon :icon="['fas', 'upload']" />
+          </b-button>
+        </div>
+      </div>
+    </b-modal>
+
   </div>
 </template>
 
@@ -304,6 +348,7 @@ export default {
       windowWidth: '',
       coordinatesGenerated: false,
       showTable: false,
+      mindMapName: '',
       treeData: {
         label: 'root',
         expand: true,
@@ -379,6 +424,7 @@ export default {
           })
 
           this.checkMindMap(gptAnswer)
+          this.checkConversationSize(res.answer.usage.total_tokens)
         })
         .catch((err) => {
           this.loading = false
@@ -498,7 +544,7 @@ export default {
       this.coordinatesGenerated = true
 
       const textv =
-        'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Please fill them in order for the mind map be a force based graph.'
+        'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Column z value should correspond to node level. Columns x and y should be floats between -1 and 4. Please fill them in order for the mind map be a force based graph. As always, take your time to compute a correctly formatted response (following the JSON format).'
 
       this.sendMessage({
         text: textv,
@@ -512,14 +558,38 @@ export default {
     async doGDriveRequest() {
       this.loading = true
 
-      const url = '/requestGDrive/' + 'test'
+      // Replace spaces with '_' on this.mindMapName
+      this.mindMapName = this.mindMapName.replace(/\s/g, '_')
+      
+      const url = '/requestGDrive/' + this.mindMapName
       await this.$axios
         .$post(url, this.mindMap)
-        .then((res) => {
-          console.log(res)
+        .then(() => {
+          this.loading = false
+
+          this.$bvToast.toast('The Mind Map was sent to GDrive successfully!', {
+            toastClass: 'mr-5',
+            title: `Mind Map Sent Successfully`,
+            variant: "success",
+            autoHideDelay: 5000,
+            solid: true,
+            toaster: 'b-toaster-top-right'
+          })
+
+          this.$bvModal.hide('send-to-g-drive-modal')
         })
         .catch((err) => {
           this.loading = false
+
+          this.$bvToast.toast('There was an error while sending the Mind Map to GDrive, please try again.', {
+            toastClass: 'mr-5',
+            title: `Error Sending to GDrive`,
+            variant: "danger",
+            autoHideDelay: 5000,
+            solid: true,
+            toaster: 'b-toaster-top-right'
+          })
+
           console.log(err)
         })
     },
@@ -648,7 +718,7 @@ export default {
       })
 
       const textv =
-        'There seems to be more than one root node. Can you rebuild the mind map, having only one root node?'
+        'There seems to be more than one root node. Can you rebuild the mind map, having only one root node? Take your time to compute a correctly formatted response (following the JSON format).'
 
       this.sendMessage({
         text: textv,
@@ -702,6 +772,19 @@ export default {
       })
 
       await this.requestToGpt('Hello!')
+    },
+    checkConversationSize(totalTokens) {
+      if (totalTokens > 10000) {
+        this.$bvToast.toast('The model\'s conversation limit is almost being reached. If you haven\'t, consider generate the coordinates and export the mind map to Google Drive.', {
+          toastClass: 'mt-5',
+          title: `Conversation Limit Almost Reached`,
+          variant: "warning",
+          autoHideDelay: 50000,
+          solid: true,
+          toaster: 'b-toaster-top-center'
+        })
+
+      }
     },
   },
   mounted() {

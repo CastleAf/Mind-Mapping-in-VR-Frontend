@@ -8,7 +8,7 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'mind-mapping-in-vr',
+    title: 'Mind Mapping in VR',
     htmlAttrs: {
       lang: 'en',
     },
