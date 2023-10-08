@@ -136,6 +136,7 @@
       size="huge"
     >
       <div class="text-right mb-2">
+        <b-button variant="secondary" @click="toggleGraph">Graph</b-button>
         <b-button variant="secondary" @click="switchTable">
           <font-awesome-icon :icon="['fas', 'repeat']" />
           {{ showTable ? 'Toggle Graph View' : 'Toggle Table View' }}
@@ -164,7 +165,7 @@
             class="my-0"
           ></b-pagination>
         </b-card>
-        <b-card v-else class="d-block text-center">
+        <b-card v-if="!showTable && !showGraph" class="d-block text-center">
           <div class="org-tree-div">
             <vue2-org-tree
               labelClassName="org-tree-nodes"
@@ -172,6 +173,14 @@
               :data="treeData"
             />
           </div>
+        </b-card>
+        <b-card
+          class="d-block text-center"
+          v-if="showGraph"
+        >
+        <VueForceGraph3D
+          :graphData="graphData"
+        />
         </b-card>
         <div class="mb-2">
           <hr />
@@ -378,6 +387,8 @@ export default {
         },
       ],
       mindMap: [],
+      graphData: [],
+      showGraph: false
     }
   },
   computed: {
@@ -527,6 +538,11 @@ export default {
 
         console.log('ANSWER')
         console.log(gptAnswer)
+
+        console.log('Mind Map:')
+        console.log(this.mindMap)
+
+        this.generateLinks(this.mindMap)
 
         this.generateTree(this.mindMap)
 
@@ -702,6 +718,9 @@ export default {
     switchTable() {
       this.showTable = !this.showTable
     },
+    toggleGraph() {
+      this.showGraph = !this.showGraph
+    },
     async fixMultipleNode() {
 
       this.$bvToast.toast('GPT\'s response came with multiple root nodes. Sent automatic message in order to fix the issue.', {
@@ -786,6 +805,20 @@ export default {
 
       }
     },
+    generateLinks(mindMap) {
+
+      const linkList = []
+      const nodeList = []
+
+      mindMap.forEach((element) => {
+        if (+element.FromNode > 0) {
+          linkList.push({source: element.FromNode, target: element.NodeId})
+        }
+        nodeList.push({id: element.NodeId, name: element.NodeName, val: 1})
+      })
+
+      this.graphData = {nodes: nodeList, links: linkList}
+    }
   },
   mounted() {
     this.windowWidth = window.innerWidth
