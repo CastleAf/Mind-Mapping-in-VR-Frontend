@@ -707,7 +707,7 @@ export default {
       this.$bvToast.toast('GPT\'s response came with multiple root nodes. Sent automatic message in order to fix the issue.', {
         toastClass: 'mr-5 mt-5',
         title: `GPT Multiple Root Nodes Error`,
-        variant: "success",
+        variant: "warning",
         autoHideDelay: 10000,
         solid: true,
         toaster: 'b-toaster-top-right'
