@@ -1,8 +1,11 @@
 <template>
   <div class>
     <b-navbar class="app-navbar" toggleable="lg" type="dark" variant="white">
-      <b-navbar-brand class="navbar-brand" style="font-weight: bold; color: #45555f">
-        <NuxtLogo style="margin: auto; cursor: pointer;" />
+      <b-navbar-brand
+        class="navbar-brand"
+        style="font-weight: bold; color: #45555f"
+      >
+        <NuxtLogo style="margin: auto; cursor: pointer" />
         <span class="nav-title">&nbsp; Mind Mapping In VR</span>
       </b-navbar-brand>
     </b-navbar>
@@ -124,6 +127,8 @@
             </b-col>
           </b-row>
         </div>
+        <!-- Hidden Force Graph -->
+        <div class="force-graph-div" ref="graphContainer"></div>
       </b-card>
     </b-container>
 
@@ -136,7 +141,6 @@
       size="huge"
     >
       <div class="text-right mb-2">
-        <b-button variant="secondary" @click="toggleGraph">Graph</b-button>
         <b-button variant="secondary" @click="switchTable">
           <font-awesome-icon :icon="['fas', 'repeat']" />
           {{ showTable ? 'Toggle Graph View' : 'Toggle Table View' }}
@@ -165,7 +169,7 @@
             class="my-0"
           ></b-pagination>
         </b-card>
-        <b-card v-if="!showTable && !showGraph" class="d-block text-center">
+        <b-card v-if="!showTable" class="d-block text-center">
           <div class="org-tree-div">
             <vue2-org-tree
               labelClassName="org-tree-nodes"
@@ -173,14 +177,6 @@
               :data="treeData"
             />
           </div>
-        </b-card>
-        <b-card
-          class="d-block text-center"
-          v-if="showGraph"
-        >
-        <VueForceGraph3D
-          :graphData="graphData"
-        />
         </b-card>
         <div class="mb-2">
           <hr />
@@ -208,13 +204,15 @@
         </div>
         <div class="mt-3 d-flex">
           <div class="ml-0 mr-auto">
-            <b-button variant="danger" @click="$bvModal.show('confirm-new-chat-modal')"
+            <b-button
+              variant="danger"
+              @click="$bvModal.show('confirm-new-chat-modal')"
               ><font-awesome-icon :icon="['fas', 'circle-plus']" /> New Chat
             </b-button>
           </div>
           <div class="ml-auto mr-0" style="justify-content: flex-end">
             <b-button
-              v-if="!coordinatesGenerated"
+              v-if="false"
               variant="success"
               @click="generateCoordinates"
               ><font-awesome-icon :icon="['fas', 'diagram-project']" /> Generate
@@ -277,10 +275,11 @@
       title="Restart Chat"
       size="small"
     >
-      <p>This action will erase any previous messages traded with the GPT Model and restart the conversation.</p>
       <p>
-        Are you sure you would like to start a new chat?
+        This action will erase any previous messages traded with the GPT Model
+        and restart the conversation.
       </p>
+      <p>Are you sure you would like to start a new chat?</p>
       <div class="d-flex">
         <div class="ml-0 mr-auto">
           <b-button variant="danger" @click="newChat"
@@ -288,8 +287,14 @@
           </b-button>
         </div>
         <div class="ml-auto mr-0">
-          <b-button @click="$bvModal.hide('confirm-new-chat-modal')" variant="primary"
-            >Return <font-awesome-icon :icon="['fas', 'paper-plane']" style="color: #fff;" />
+          <b-button
+            @click="$bvModal.hide('confirm-new-chat-modal')"
+            variant="primary"
+            >Return
+            <font-awesome-icon
+              :icon="['fas', 'paper-plane']"
+              style="color: #fff"
+            />
           </b-button>
         </div>
       </div>
@@ -304,9 +309,13 @@
       title="Export to Google Drive"
       size="small"
     >
-      <p>Before sending the mind map, please verify that the resulted graph is formatted correctly.</p>
       <p>
-        If that is the case, please give a name to the generated file and click the button below to send the mind map to Google Drive.
+        Before sending the mind map, please verify that the resulted graph is
+        formatted correctly.
+      </p>
+      <p>
+        If that is the case, please give a name to the generated file and click
+        the button below to send the mind map to Google Drive.
       </p>
       <b-form-group
         class="mt-2"
@@ -323,26 +332,42 @@
           required
         ></b-form-input>
       </b-form-group>
-      <br>
+      <br />
       <div class="d-flex">
         <div class="ml-0 mr-auto">
-          <b-button :disabled="loading" @click="$bvModal.hide('send-to-g-drive-modal')" variant="primary"
-            ><font-awesome-icon :icon="['fas', 'paper-plane']" style="color: #fff;" /> Return
+          <b-button
+            :disabled="loading"
+            @click="$bvModal.hide('send-to-g-drive-modal')"
+            variant="primary"
+            ><font-awesome-icon
+              :icon="['fas', 'paper-plane']"
+              style="color: #fff"
+            />
+            Return
           </b-button>
         </div>
         <div class="ml-auto mr-0">
-          <b-spinner v-if="loading" small label="Small Spinner" variant="primary"></b-spinner>
-          <b-button :disabled="loading || !this.mindMapName.length" variant="success" @click="doGDriveRequest"
-            >Export to Google Drive <font-awesome-icon :icon="['fas', 'upload']" />
+          <b-spinner
+            v-if="loading"
+            small
+            label="Small Spinner"
+            variant="primary"
+          ></b-spinner>
+          <b-button
+            :disabled="loading || !this.mindMapName.length"
+            variant="success"
+            @click="doGDriveRequest"
+            >Export to Google Drive
+            <font-awesome-icon :icon="['fas', 'upload']" />
           </b-button>
         </div>
       </div>
     </b-modal>
-
   </div>
 </template>
 
 <script>
+import ForceGraph3D from '3d-force-graph';
 import ChatBox from '@/components/ChatBox.vue'
 import Message from '@/components/Message.vue'
 
@@ -355,21 +380,12 @@ export default {
   data() {
     return {
       windowWidth: '',
-      coordinatesGenerated: false,
+      coordinatesGenerated: true,
       showTable: false,
       mindMapName: '',
-      treeData: {
-        label: 'root',
-        expand: true,
-        children: [
-          { label: 'child 1' },
-          {
-            label: 'child 2',
-            children: [{ label: 'child 4' }, { label: 'child 5' }],
-          },
-          { label: 'child 3' },
-        ],
-      },
+      treeData: {},
+      graphData: [],
+      generatedGraph: [],
       loading: false,
       rootNodeError: false,
       mindMapButton: false,
@@ -386,9 +402,7 @@ export default {
             "You are helping the User to build a Mind Map. The user will prompt for you to create a Mind Map based on a text input. When you have the information needed to build the mind map, please answer in the mind map format, such as: [{'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}, {'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}].",
         },
       ],
-      mindMap: [],
-      graphData: [],
-      showGraph: false
+      mindMap: []
     }
   },
   computed: {
@@ -419,7 +433,7 @@ export default {
       })
 
       // Request to OpenAI
-      const url = '/requestV2/' + 'test'
+      const url = '/requestV2'
       await this.$axios
         .$post(url, this.gptHistory)
         .then((res) => {
@@ -466,7 +480,7 @@ export default {
         author: auth,
         gptLoading: message.gptLoading,
         mindMap: JSON.stringify(message.mindMap),
-        autoGenerated: message.autoGenerated
+        autoGenerated: message.autoGenerated,
       })
       this.id++
       this.scrollToBottom()
@@ -566,7 +580,7 @@ export default {
         text: textv,
         role: 'user',
         gptLoading: false,
-        autoGenerated: true
+        autoGenerated: true,
       })
 
       this.requestToGpt(textv)
@@ -576,7 +590,18 @@ export default {
 
       // Replace spaces with '_' on this.mindMapName
       this.mindMapName = this.mindMapName.replace(/\s/g, '_')
-      
+
+      const graphNodes = this.graphData.nodes
+
+      this.mindMap.forEach(el => {
+        // Get object with same id on graphNodes in order to update MindMap coordinates
+        const obj = graphNodes.find(x => x.id === el.NodeId)
+
+        el.x = obj?.x
+        el.y = obj?.y
+        el.z = obj?.z
+      })
+
       const url = '/requestGDrive/' + this.mindMapName
       await this.$axios
         .$post(url, this.mindMap)
@@ -586,10 +611,10 @@ export default {
           this.$bvToast.toast('The Mind Map was sent to GDrive successfully!', {
             toastClass: 'mr-5',
             title: `Mind Map Sent Successfully`,
-            variant: "success",
+            variant: 'success',
             autoHideDelay: 5000,
             solid: true,
-            toaster: 'b-toaster-top-right'
+            toaster: 'b-toaster-top-right',
           })
 
           this.$bvModal.hide('send-to-g-drive-modal')
@@ -597,14 +622,17 @@ export default {
         .catch((err) => {
           this.loading = false
 
-          this.$bvToast.toast('There was an error while sending the Mind Map to GDrive, please try again.', {
-            toastClass: 'mr-5',
-            title: `Error Sending to GDrive`,
-            variant: "danger",
-            autoHideDelay: 5000,
-            solid: true,
-            toaster: 'b-toaster-top-right'
-          })
+          this.$bvToast.toast(
+            'There was an error while sending the Mind Map to GDrive, please try again.',
+            {
+              toastClass: 'mr-5',
+              title: `Error Sending to GDrive`,
+              variant: 'danger',
+              autoHideDelay: 5000,
+              solid: true,
+              toaster: 'b-toaster-top-right',
+            }
+          )
 
           console.log(err)
         })
@@ -616,7 +644,6 @@ export default {
       }
     },
     showModal() {
-
       // Default Table page should be 1
       this.currentPage = 1
       this.$refs['mind-map-modal'].show()
@@ -718,19 +745,18 @@ export default {
     switchTable() {
       this.showTable = !this.showTable
     },
-    toggleGraph() {
-      this.showGraph = !this.showGraph
-    },
     async fixMultipleNode() {
-
-      this.$bvToast.toast('GPT\'s response came with multiple root nodes. Sent automatic message in order to fix the issue.', {
-        toastClass: 'mr-5 mt-5',
-        title: `GPT Multiple Root Nodes Error`,
-        variant: "warning",
-        autoHideDelay: 10000,
-        solid: true,
-        toaster: 'b-toaster-top-right'
-      })
+      this.$bvToast.toast(
+        "GPT's response came with multiple root nodes. Sent automatic message in order to fix the issue.",
+        {
+          toastClass: 'mr-5 mt-5',
+          title: `GPT Multiple Root Nodes Error`,
+          variant: 'warning',
+          autoHideDelay: 10000,
+          solid: true,
+          toaster: 'b-toaster-top-right',
+        }
+      )
 
       this.messages.forEach((element) => {
         element.mindMap = false
@@ -743,7 +769,7 @@ export default {
         text: textv,
         role: 'user',
         gptLoading: false,
-        autoGenerated: true
+        autoGenerated: true,
       })
 
       await this.requestToGpt(textv)
@@ -758,7 +784,7 @@ export default {
         text: textv,
         role: 'user',
         gptLoading: false,
-        autoGenerated: true
+        autoGenerated: true,
       })
 
       await this.requestToGpt(textv)
@@ -769,7 +795,8 @@ export default {
       this.$bvModal.hide('confirm-new-chat-modal')
       console.log('Reset on chat')
 
-      this.coordinatesGenerated = false
+      // this.coordinatesGenerated = false
+      this.generatedGraph = []
 
       // This method is called on the syntax error modal
       // Reset and start a new chat.
@@ -794,31 +821,46 @@ export default {
     },
     checkConversationSize(totalTokens) {
       if (totalTokens > 10000) {
-        this.$bvToast.toast('The model\'s conversation limit is almost being reached. If you haven\'t, consider generate the coordinates and export the mind map to Google Drive.', {
-          toastClass: 'mt-5',
-          title: `Conversation Limit Almost Reached`,
-          variant: "warning",
-          autoHideDelay: 50000,
-          solid: true,
-          toaster: 'b-toaster-top-center'
-        })
-
+        this.$bvToast.toast(
+          "The model's conversation limit is almost being reached. If you haven't, consider generate the coordinates and export the mind map to Google Drive.",
+          {
+            toastClass: 'mt-5',
+            title: `Conversation Limit Almost Reached`,
+            variant: 'warning',
+            autoHideDelay: 50000,
+            solid: true,
+            toaster: 'b-toaster-top-center',
+          }
+        )
       }
     },
     generateLinks(mindMap) {
-
       const linkList = []
       const nodeList = []
 
+      const firstLevel = +(mindMap[0]?.NodeLevel)
+      const rootSize = 15
+
       mindMap.forEach((element) => {
         if (+element.FromNode > 0) {
-          linkList.push({source: element.FromNode, target: element.NodeId})
+          linkList.push({ source: element.FromNode, target: element.NodeId })
         }
-        nodeList.push({id: element.NodeId, name: element.NodeName, val: 1})
+
+        // First level should have a mass of 15, subsequent levels should subtract 0.5 per level
+        const massValue = rootSize - (+element.NodeLevel - firstLevel) * 0.5
+        console.log(+element.NodeLevel)
+        console.log(massValue)
+        nodeList.push({ id: element.NodeId, name: element.NodeName, val: massValue })
       })
 
-      this.graphData = {nodes: nodeList, links: linkList}
-    }
+      this.graphData = { nodes: nodeList, links: linkList }
+
+      const myGraph = ForceGraph3D()
+      myGraph(this.$refs.graphContainer)
+        .graphData(this.graphData)
+
+      this.generatedGraph = myGraph.graphData()
+    },
   },
   mounted() {
     this.windowWidth = window.innerWidth
@@ -904,6 +946,9 @@ body {
 .org-tree-div {
   overflow: auto;
   max-height: 45vh;
+}
+.force-graph-div {
+  display: none;
 }
 .img-div {
   display: flex;

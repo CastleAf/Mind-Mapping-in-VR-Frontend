@@ -30,7 +30,7 @@ export default {
   ],
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
-  plugins: ['@/plugins/vue-org-tree.js', '@/plugins/fontawesome.js', '@/plugins/vue-force-graph.js'],
+  plugins: ['@/plugins/vue-org-tree.js', '@/plugins/fontawesome.js'],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
