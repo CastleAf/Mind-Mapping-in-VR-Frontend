@@ -22,8 +22,7 @@
               fluid
               style="overflow: auto; max-height: fit-content"
             >
-              <h2 style="font-weight: bold">Mind Mapping in VR</h2>
-              <br />
+              <h2 class="mb-3" style="font-weight: bold">Mind Mapping in VR</h2>
               <p>
                 This Web App, developed by
                 <a href="mailto:afonso.castelao@tecnico.ulisboa.pt"
@@ -48,7 +47,8 @@
                 Through the exchange of messages (prompts) with the GPT model, a
                 Mind Map will be built. The user is able to keep chatting with
                 the model in an informal way in order to achieve the desired
-                result.
+                result. Afterwards, some data processing is done in order to
+                generate a 3D graph layout.
               </p>
               <p>
                 The final mind map visualization and interaction is to be made
@@ -367,7 +367,7 @@
 </template>
 
 <script>
-import ForceGraph3D from '3d-force-graph';
+import ForceGraph3D from '3d-force-graph'
 import ChatBox from '@/components/ChatBox.vue'
 import Message from '@/components/Message.vue'
 
@@ -402,7 +402,7 @@ export default {
             "You are helping the User to build a Mind Map. The user will prompt for you to create a Mind Map based on a text input. When you have the information needed to build the mind map, please answer in the mind map format, such as: [{'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}, {'NodeId': 'value', 'NodeName': 'value', 'FromNode': 'value', 'NodeLevel': 'value'}].",
         },
       ],
-      mindMap: []
+      mindMap: [],
     }
   },
   computed: {
@@ -522,7 +522,7 @@ export default {
         // Remove everything after ']'
         gptAnswer = gptAnswer.substring(0, index2 + 1)
 
-        // Replace None with "None" FIXME: Check for error here
+        // Replace None with "None"
         gptAnswer = gptAnswer.replace(' None', ' "None"')
 
         // Replace first single quotes (not in words) into double quotes
@@ -593,9 +593,9 @@ export default {
 
       const graphNodes = this.graphData.nodes
 
-      this.mindMap.forEach(el => {
+      this.mindMap.forEach((el) => {
         // Get object with same id on graphNodes in order to update MindMap coordinates
-        const obj = graphNodes.find(x => x.id === el.NodeId)
+        const obj = graphNodes.find((x) => x.id === el.NodeId)
 
         el.x = obj?.x
         el.y = obj?.y
@@ -762,6 +762,11 @@ export default {
         element.mindMap = false
       })
 
+      if (this.messages[this.messages.length - 1].text === '') {
+        this.messages[this.messages.length - 1].text =
+          '[GPT Sent Invalid Response]'
+      }
+
       const textv =
         'There seems to be more than one root node. Can you rebuild the mind map, having only one root node? Take your time to compute a correctly formatted response (following the JSON format).'
 
@@ -777,6 +782,17 @@ export default {
     async retryChat() {
       this.hideErrorModal()
       console.log('Retrying chat')
+
+      this.messages.forEach((element) => {
+        if (element.gptLoading) {
+          element.gptLoading = false
+          element.text = '[GPT Sent Invalid Response]'
+        }
+      })
+
+      this.messages[this.messages.length - 1].text =
+        '[GPT Sent Invalid Response]'
+
       const textv =
         'The last response was invalid. Please take your time to compute a correctly formatted response (following the JSON format).'
 
@@ -838,7 +854,7 @@ export default {
       const linkList = []
       const nodeList = []
 
-      const firstLevel = +(mindMap[0]?.NodeLevel)
+      const firstLevel = +mindMap[0]?.NodeLevel
       const rootSize = 15
 
       mindMap.forEach((element) => {
@@ -850,14 +866,17 @@ export default {
         const massValue = rootSize - (+element.NodeLevel - firstLevel) * 0.5
         console.log(+element.NodeLevel)
         console.log(massValue)
-        nodeList.push({ id: element.NodeId, name: element.NodeName, val: massValue })
+        nodeList.push({
+          id: element.NodeId,
+          name: element.NodeName,
+          val: massValue,
+        })
       })
 
       this.graphData = { nodes: nodeList, links: linkList }
 
       const myGraph = ForceGraph3D()
-      myGraph(this.$refs.graphContainer)
-        .graphData(this.graphData)
+      myGraph(this.$refs.graphContainer).graphData(this.graphData)
 
       this.generatedGraph = myGraph.graphData()
     },
