@@ -1,6 +1,6 @@
 # Mind Mapping in VR - Front End
 
-This application runs as the frontend part of the Mind Mapping in VR whole application.
+This application serves as the frontend part of the Mind Mapping in VR whole application.
 
 ## Build Setup
 
