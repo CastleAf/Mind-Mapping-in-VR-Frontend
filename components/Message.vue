@@ -6,7 +6,6 @@
         <font-awesome-icon v-if="author === 'user'" :icon="['fas', 'circle-user']" />
         <font-awesome-icon v-else :icon="['fas', 'robot']" />
       </span>
-      
       <b-badge v-else variant="secondary" class="auto-badge"
         >Auto-Generated Message</b-badge
       >

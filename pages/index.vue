@@ -185,20 +185,11 @@
               Above you can observe the mind map that was generated based on the
               prompt.
             </p>
-            <p
-              v-if="!coordinatesGenerated"
-              class="mx-4"
-              style="font-size: large"
-            >
-              You can either modify and add information to the graph by chatting
-              with the GPT model or opt to generate 3D coordinates for each
-              node:
-            </p>
-            <p v-else class="mx-4" style="font-size: large">
+            <p class="mx-4" style="font-size: large">
               You can keep modifying or adding information to the graph by
               chatting with the GPT model. Once you are satisfied with the
               result, you can send the mind map to Google Drive by clicking the
-              button below.
+              button on the right corner.
             </p>
           </div>
         </div>
@@ -211,19 +202,11 @@
             </b-button>
           </div>
           <div class="ml-auto mr-0" style="justify-content: flex-end">
-            <b-button
-              v-if="false"
-              variant="success"
-              @click="generateCoordinates"
-              ><font-awesome-icon :icon="['fas', 'diagram-project']" /> Generate
-              Coordinates
-            </b-button>
             <b-button variant="primary" @click="hideModal"
               ><font-awesome-icon :icon="['fas', 'comments']" /> Keep
               Chatting</b-button
             >
             <b-button
-              v-if="coordinatesGenerated"
               variant="success"
               @click="$bvModal.show('send-to-g-drive-modal')"
               ><font-awesome-icon :icon="['fas', 'upload']" /> Send to Google
@@ -290,7 +273,7 @@
           <b-button
             @click="$bvModal.hide('confirm-new-chat-modal')"
             variant="primary"
-            >Return
+            >Keep Chatting
             <font-awesome-icon
               :icon="['fas', 'paper-plane']"
               style="color: #fff"
@@ -356,7 +339,7 @@
           <b-button
             :disabled="loading || !this.mindMapName.length"
             variant="success"
-            @click="doGDriveRequest"
+            @click="sendToGoogleDrive"
             >Export to Google Drive
             <font-awesome-icon :icon="['fas', 'upload']" />
           </b-button>
@@ -380,7 +363,6 @@ export default {
   data() {
     return {
       windowWidth: '',
-      coordinatesGenerated: true,
       showTable: false,
       mindMapName: '',
       treeData: {},
@@ -426,6 +408,8 @@ export default {
     },
     async requestToGpt(message) {
       this.gptHistory.push({ role: 'user', content: message })
+
+      // Render GPT Loading spinners on Chat
       this.sendMessage({
         text: '',
         role: 'assistant',
@@ -433,7 +417,7 @@ export default {
       })
 
       // Request to OpenAI
-      const url = '/requestV2'
+      const url = '/request/gpt'
       await this.$axios
         .$post(url, this.gptHistory)
         .then((res) => {
@@ -491,15 +475,17 @@ export default {
     checkMindMap(gptAnswer) {
       this.rootNodeError = false
 
+      // Check if GPT Answer contains Mind Map
       if (gptAnswer.includes('NodeId')) {
-        // Clean previous Mind Map buttons
+
+        // Clean previous Mind Map pop-up buttons
         if (this.mindMapButton) {
           this.messages.forEach((element) => {
             element.mindMap = false
           })
         }
 
-        // Flag used in case the GPT Answer contains only the mind map
+        // Flag used in case the GPT Answer contains only the mind map in its response
         let mockMessage = false
 
         // Search for first '[' in gptAnswer
@@ -531,9 +517,6 @@ export default {
         // Replace last single quotes (not in words) into double quotes
         gptAnswer = gptAnswer.replace(/'(?!\w)/g, '"')
 
-        console.log('Before Parse!!')
-        console.log(gptAnswer)
-
         this.mindMap = JSON.parse(gptAnswer)
         this.totalRows = this.mindMap.length
 
@@ -556,8 +539,10 @@ export default {
         console.log('Mind Map:')
         console.log(this.mindMap)
 
-        this.generateLinks(this.mindMap)
+        // Used to extract 3D coordinates
+        this.generateGraph(this.mindMap)
 
+        // Generate Tree to represent 2D Mind Map
         this.generateTree(this.mindMap)
 
         if (!this.rootNodeError) {
@@ -566,26 +551,7 @@ export default {
         this.scrollToBottom()
       }
     },
-    generateCoordinates() {
-      this.hideModal()
-
-      // Next time user opens mind map modal, it will be in table view
-      this.showTable = true
-      this.coordinatesGenerated = true
-
-      const textv =
-        'Can you please add three columns: "x", "y" and "z" which represent 3d coordinates of each node? Column z value should correspond to node level. Columns x and y should be floats between -1 and 4. Please fill them in order for the mind map be a force based graph. As always, take your time to compute a correctly formatted response (following the JSON format).'
-
-      this.sendMessage({
-        text: textv,
-        role: 'user',
-        gptLoading: false,
-        autoGenerated: true,
-      })
-
-      this.requestToGpt(textv)
-    },
-    async doGDriveRequest() {
+    async sendToGoogleDrive() {
       this.loading = true
 
       // Replace spaces with '_' on this.mindMapName
@@ -602,13 +568,13 @@ export default {
         el.z = obj?.z
       })
 
-      const url = '/requestGDrive/' + this.mindMapName
+      const url = '/request/google-drive/' + this.mindMapName
       await this.$axios
         .$post(url, this.mindMap)
         .then(() => {
           this.loading = false
 
-          this.$bvToast.toast('The Mind Map was sent to GDrive successfully!', {
+          this.$bvToast.toast('The Mind Map was sent to Google Drive successfully!', {
             toastClass: 'mr-5',
             title: `Mind Map Sent Successfully`,
             variant: 'success',
@@ -623,10 +589,10 @@ export default {
           this.loading = false
 
           this.$bvToast.toast(
-            'There was an error while sending the Mind Map to GDrive, please try again.',
+            'There was an error while uploading the Mind Map to Google Drive, please try again.',
             {
               toastClass: 'mr-5',
-              title: `Error Sending to GDrive`,
+              title: `Error Sending to Google Drive`,
               variant: 'danger',
               autoHideDelay: 5000,
               solid: true,
@@ -637,6 +603,7 @@ export default {
           console.log(err)
         })
     },
+    // Scroll Chat to bottom on new messages
     scrollToBottom() {
       const container = this.$el.querySelector('.messages')
       if (container && container.scrollTop !== null) {
@@ -649,12 +616,9 @@ export default {
       this.$refs['mind-map-modal'].show()
     },
     hideModal() {
+      // Default view should be graph view
+      this.showTable = false
       this.$refs['mind-map-modal'].hide()
-
-      // Default view should be graph view (except when user generates coordinates)
-      if (this.showTable) {
-        this.showTable = false
-      }
     },
     showErrorModal() {
       this.$refs['error-modal'].show()
@@ -662,11 +626,13 @@ export default {
     hideErrorModal() {
       this.$refs['error-modal'].hide()
     },
-    generateTree(treeData) {
-      // Firstly, sort tree by NodeLevel
-      treeData.sort((a, b) => (+a.NodeLevel > +b.NodeLevel ? 1 : -1))
+    generateTree(mindMap) {
 
-      const newData = treeData.map(({ NodeName: label, ...rest }) => ({
+      // Firstly, sort tree by NodeLevel
+      mindMap.sort((a, b) => (+a.NodeLevel > +b.NodeLevel ? 1 : -1))
+
+      // Transform NodeName object into string label
+      const listData = mindMap.map(({ NodeName: label, ...rest }) => ({
         label,
         ...rest,
       }))
@@ -674,48 +640,32 @@ export default {
       const map = new Map()
 
       // Create a mapping between NodeId and increasing integers
-      for (let i = 0; i < newData.length; i++) {
-        map.set(newData[i].NodeId, i)
+      for (let i = 0; i < listData.length; i++) {
+        map.set(listData[i].NodeId, i)
       }
 
       // Replace NodeId and FromNode with map values
-      for (let i = 0; i < newData.length; i++) {
-        newData[i].NodeId = map.get(newData[i].NodeId)
-        newData[i].FromNode = map.get(newData[i].FromNode)
+      for (let i = 0; i < listData.length; i++) {
+        listData[i].NodeId = map.get(listData[i].NodeId)
+        listData[i].FromNode = map.get(listData[i].FromNode)
       }
 
-      const objsPerLevel = []
-
-      // Then, create array of arrays of objects, per node level
-      for (let i = 0; i < treeData.length; i++) {
-        if (objsPerLevel[treeData[i].NodeLevel - 1] === undefined) {
-          objsPerLevel[treeData[i].NodeLevel - 1] = []
-        }
-        objsPerLevel[treeData[i].NodeLevel - 1].push(treeData[i])
-      }
-
-      console.log('Data to parse')
-      console.log(newData)
-
-      this.list_to_tree(newData)
+      // Convert List object to a Tree
+      this.convertListToTree(listData)
     },
-    list_to_tree(list) {
-      // console.log(list)
+    convertListToTree(list) {
 
       const map = {}
       let node
       const roots = []
-      let i
 
-      for (i = 0; i < list.length; i += 1) {
-        map[list[i].NodeId] = i // initialize the map
-        list[i].children = [] // initialize the children
+      for (let i = 0; i < list.length; i++) {
+        map[list[i].NodeId] = i // Initialize the map
+        list[i].children = [] // Initialize the children
       }
 
-      console.log(map)
-      console.log(list)
-
-      for (i = 0; i < list.length; i += 1) {
+      // Build the tree
+      for (let i = 0; i < list.length; i++) {
         node = list[i]
         if (
           node.FromNode !== '' &&
@@ -723,14 +673,12 @@ export default {
           node.FromNode !== undefined &&
           node.FromNode !== 'None'
         ) {
-          // if you have dangling branches check that map[node.FromNode] exists
           list[map[node.FromNode]].children.push(node)
         } else {
           roots.push(node)
         }
       }
-      console.log('roots time')
-      console.log(roots)
+
       if (roots.length > 1) {
         console.log('There are more than one root node. Printing message...')
 
@@ -739,8 +687,8 @@ export default {
         // Send automatic message to fix the issue and display toast
         this.fixMultipleNode()
       }
+
       this.treeData = roots[0]
-      return roots
     },
     switchTable() {
       this.showTable = !this.showTable
@@ -758,26 +706,28 @@ export default {
         }
       )
 
+      // Remove all mind map pop-up buttons
       this.messages.forEach((element) => {
         element.mindMap = false
       })
 
+      // Change last (assistant) message to invalid response
       if (this.messages[this.messages.length - 1].text === '') {
         this.messages[this.messages.length - 1].text =
           '[GPT Sent Invalid Response]'
       }
 
-      const textv =
+      const prompt =
         'There seems to be more than one root node. Can you rebuild the mind map, having only one root node? Take your time to compute a correctly formatted response (following the JSON format).'
 
       this.sendMessage({
-        text: textv,
+        text: prompt,
         role: 'user',
         gptLoading: false,
         autoGenerated: true,
       })
 
-      await this.requestToGpt(textv)
+      await this.requestToGpt(prompt)
     },
     async retryChat() {
       this.hideErrorModal()
@@ -811,7 +761,6 @@ export default {
       this.$bvModal.hide('confirm-new-chat-modal')
       console.log('Reset on chat')
 
-      // this.coordinatesGenerated = false
       this.generatedGraph = []
 
       // This method is called on the syntax error modal
@@ -836,9 +785,9 @@ export default {
       await this.requestToGpt('Hello!')
     },
     checkConversationSize(totalTokens) {
-      if (totalTokens > 10000) {
+      if (totalTokens > 12000) {
         this.$bvToast.toast(
-          "The model's conversation limit is almost being reached. If you haven't, consider generate the coordinates and export the mind map to Google Drive.",
+          "The model's conversation limit is almost being reached. Consider exporting the mind map to Google Drive soon.",
           {
             toastClass: 'mt-5',
             title: `Conversation Limit Almost Reached`,
@@ -850,13 +799,14 @@ export default {
         )
       }
     },
-    generateLinks(mindMap) {
+    generateGraph(mindMap) {
       const linkList = []
       const nodeList = []
 
       const firstLevel = +mindMap[0]?.NodeLevel
       const rootSize = 15
 
+      // Populate linkList and nodeList
       mindMap.forEach((element) => {
         if (+element.FromNode > 0) {
           linkList.push({ source: element.FromNode, target: element.NodeId })
@@ -864,8 +814,7 @@ export default {
 
         // First level should have a mass of 15, subsequent levels should subtract 0.5 per level
         const massValue = rootSize - (+element.NodeLevel - firstLevel) * 0.5
-        console.log(+element.NodeLevel)
-        console.log(massValue)
+ 
         nodeList.push({
           id: element.NodeId,
           name: element.NodeName,
